@@ -1,0 +1,3957 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0B0F17" />
+    <meta name="color-scheme" content="dark" />
+
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icons/icon-192.svg" />
+
+    <title>RAP FLOW COACH v0.8.5</title>
+
+    <style>
+      :root {
+        --bg: #0b0f17;
+        --panel: rgba(255, 255, 255, 0.06);
+        --panel2: rgba(255, 255, 255, 0.09);
+        --text: rgba(255, 255, 255, 0.92);
+        --muted: rgba(255, 255, 255, 0.68);
+        --muted2: rgba(255, 255, 255, 0.55);
+        --line: rgba(255, 255, 255, 0.12);
+        --accent: #00E5FF;
+        --accent2: #FFFFFF;
+        --good: #00E5FF;
+        --warn: #fbbf24;
+        --danger: #fb7185;
+        --amber: #fbbf24;
+        --success: #34d399;
+
+        --radius: 18px;
+        --radius2: 14px;
+        --shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+        --safe-top: env(safe-area-inset-top, 0px);
+        --safe-bottom: env(safe-area-inset-bottom, 0px);
+        --safe-left: env(safe-area-inset-left, 0px);
+        --safe-right: env(safe-area-inset-right, 0px);
+      }
+
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans TC", "PingFang TC", "Heiti TC", Arial, sans-serif;
+        background: radial-gradient(1200px 700px at 50% -10%, rgba(0, 229, 255, 0.18), transparent 60%),
+                    radial-gradient(900px 500px at 10% 20%, rgba(0, 229, 255, 0.12), transparent 55%),
+                    var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      button, input {
+        font: inherit;
+        color: inherit;
+      }
+
+      .app {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        padding: calc(16px + var(--safe-top)) calc(16px + var(--safe-right)) calc(18px + var(--safe-bottom)) calc(16px + var(--safe-left));
+        max-width: 740px;
+        margin: 0 auto;
+      }
+
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .brand {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .brand .title {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 16px;
+        color: var(--text);
+      }
+      .brand .subtitle {
+        font-size: 12px;
+        color: var(--muted);
+        display: none;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        border-radius: 999px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+
+      .pill .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--muted2);
+        flex-shrink: 0;
+      }
+      .pill[data-state="playing"] .dot { background: var(--good); }
+      .pill[data-state="paused"] .dot { background: var(--warn); }
+      .pill .stateText {
+        font-size: 12px;
+        color: var(--muted);
+        user-select: none;
+        white-space: nowrap;
+      }
+      
+      .calendarBtn {
+        padding: 10px 12px;
+        font-size: 18px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        cursor: pointer;
+        transition: all 0.2s;
+        touch-action: manipulation;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .calendarBtn:hover {
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(255,255,255,0.2);
+      }
+      .calendarBtn:active {
+        background: rgba(0,229,255,0.2);
+        border-color: rgba(0,229,255,0.4);
+        transform: scale(0.95);
+      }
+      
+      .calendarModal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.75);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        overflow-y: auto;
+      }
+      .calendarModal.show {
+        display: flex;
+      }
+      .calendarContent {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        max-width: 600px;
+        width: 100%;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: var(--shadow);
+      }
+      .calendarHeader {
+        padding: 16px;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .calendarHeader h2 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+      }
+      .calendarCloseBtn {
+        padding: 6px 12px;
+        font-size: 14px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .calendarCloseBtn:hover {
+        background: rgba(255,255,255,0.12);
+      }
+      .calendarBody {
+        padding: 16px;
+      }
+      .calendarNav {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .calendarNavBtn {
+        padding: 8px 16px;
+        font-size: 14px;
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .calendarNavBtn:hover {
+        background: rgba(255,255,255,0.12);
+      }
+      .calendarMonthYear {
+        font-size: 16px;
+        font-weight: 600;
+      }
+      .calendarGrid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 4px;
+        margin-bottom: 16px;
+      }
+      .calendarDayHeader {
+        padding: 8px;
+        text-align: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .calendarDay {
+        aspect-ratio: 1;
+        padding: 6px 4px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        position: relative;
+        background: rgba(255,255,255,0.03);
+        min-height: 0;
+      }
+      .calendarDay:hover {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(0,229,255,0.3);
+      }
+      .calendarDay.otherMonth {
+        opacity: 0.3;
+      }
+      .calendarDay.today {
+        border-color: rgba(0,229,255,0.5);
+        background: rgba(0,229,255,0.1);
+      }
+      .calendarDay.hasTraining {
+        background: rgba(0,229,255,0.2);
+        border-color: rgba(0,229,255,0.5);
+      }
+      .calendarDay.goalAchieved {
+        background: rgba(52,211,153,0.25);
+        border-color: rgba(52,211,153,0.6);
+        box-shadow: 0 0 0 2px rgba(52,211,153,0.3);
+      }
+      .calendarDay.goalAchieved .calendarDayNumber {
+        color: var(--success);
+      }
+      .calendarDay.goalAchieved .calendarDaySessions,
+      .calendarDay.goalAchieved .calendarDayDuration {
+        color: rgba(52,211,153,0.9);
+      }
+      .calendarDayNumber {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.2;
+        margin-bottom: 2px;
+      }
+      .calendarDaySessions {
+        font-size: 9px;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1.2;
+        text-align: center;
+        margin-bottom: 2px;
+      }
+      .calendarDayDuration {
+        font-size: 9px;
+        font-weight: 600;
+        color: var(--text);
+        line-height: 1.2;
+        text-align: center;
+      }
+      .calendarStats {
+        padding: 12px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        margin-bottom: 16px;
+      }
+      .calendarStatsTitle {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .calendarStatsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      .calendarStatItem {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .calendarStatLabel {
+        font-size: 11px;
+        color: var(--muted2);
+      }
+      .calendarStatValue {
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .calendarBpmStatsSection {
+        grid-column: 1 / -1;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--line);
+      }
+      .calendarBpmStatsTitle {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .calendarBpmStatsGrid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .calendarBpmStatItem {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        padding: 6px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 4px;
+      }
+      .calendarBpmStatLabel {
+        font-size: 10px;
+        color: var(--muted2);
+      }
+      .calendarBpmStatValue {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--accent);
+      }
+      .calendarGrooveBpmSection {
+        margin-top: 12px;
+        margin-bottom: 12px;
+      }
+      .calendarGrooveBpmSection:first-child {
+        margin-top: 0;
+      }
+      .calendarGrooveBpmTitle {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--accent);
+        margin-bottom: 6px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(0,229,255,0.2);
+      }
+      .calendarDayDetail {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 2px solid var(--line);
+      }
+      .calendarDayDetailTitle {
+        font-size: 18px;
+        font-weight: 700;
+        margin-bottom: 16px;
+        color: var(--text);
+        letter-spacing: 0.3px;
+      }
+      .calendarSessionList {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .calendarDayDetailSummary {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 16px;
+        padding: 12px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+      }
+      .calendarDayDetailSummaryItem {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .calendarDayDetailSummaryLabel {
+        font-size: 11px;
+        color: var(--muted2);
+      }
+      .calendarDayDetailSummaryValue {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .calendarSessionGroup {
+        margin-bottom: 24px;
+      }
+      .calendarSessionGroup:last-child {
+        margin-bottom: 0;
+      }
+      .calendarSessionGroupTitle {
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid rgba(0,229,255,0.3);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .calendarSessionGroupTitle::before {
+        content: '';
+        width: 3px;
+        height: 16px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .calendarSessionItem {
+        padding: 14px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 8px;
+        font-size: 12px;
+        margin-bottom: 10px;
+        transition: all 0.2s;
+        position: relative;
+      }
+      .calendarSessionItem:hover {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(0,229,255,0.3);
+        transform: translateY(-1px);
+      }
+      .calendarSessionItem:last-child {
+        margin-bottom: 0;
+      }
+      .calendarSessionHeader {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .calendarSessionDuration {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 18px;
+        line-height: 1.2;
+        white-space: nowrap;
+        background: rgba(0,229,255,0.12);
+        padding: 6px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(0,229,255,0.25);
+      }
+      .calendarBpmRangeSection {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        padding-top: 20px;
+        border-top: 2px solid var(--line);
+      }
+      .calendarBpmRangeTitle {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .calendarBpmRangeGrid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+      }
+      .calendarBpmRangeItem {
+        padding: 10px;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        transition: all 0.2s;
+      }
+      .calendarBpmRangeItem:hover {
+        background: rgba(255,255,255,0.08);
+        border-color: rgba(0,229,255,0.3);
+        transform: translateY(-1px);
+      }
+      .calendarBpmRangeItem.bpmRangeAmber {
+        border-color: rgba(251,191,36,0.4);
+        background: rgba(251,191,36,0.08);
+      }
+      .calendarBpmRangeItem.bpmRangeAmber:hover {
+        border-color: rgba(251,191,36,0.6);
+        background: rgba(251,191,36,0.12);
+      }
+      .calendarBpmRangeItem.bpmRangeGreen {
+        border-color: rgba(52,211,153,0.4);
+        background: rgba(52,211,153,0.08);
+      }
+      .calendarBpmRangeItem.bpmRangeGreen:hover {
+        border-color: rgba(52,211,153,0.6);
+        background: rgba(52,211,153,0.12);
+      }
+      .calendarBpmRangeLabel {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .calendarBpmRangeValue {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1.2;
+      }
+      .calendarBpmRangeItem.bpmRangeAmber .calendarBpmRangeValue {
+        color: var(--amber);
+      }
+      .calendarBpmRangeItem.bpmRangeGreen .calendarBpmRangeValue {
+        color: var(--success);
+      }
+      .calendarBpmRangeCount {
+        font-size: 10px;
+        color: var(--muted2);
+        margin-top: 2px;
+      }
+      .calendarBpmRangeItem.bpmRangeAmber .calendarBpmRangeCount {
+        color: rgba(251,191,36,0.8);
+      }
+      .calendarBpmRangeItem.bpmRangeGreen .calendarBpmRangeCount {
+        color: rgba(52,211,153,0.8);
+      }
+      
+      .dailyGoalHeader {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .dailyGoalTitle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .dailyGoalProgressInfo {
+        display: flex;
+        align-items: baseline;
+        gap: 8px;
+        font-size: 12px;
+      }
+      .dailyGoalProgressInfo span:first-child {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .dailyGoalProgressInfo span:last-child {
+        color: var(--accent);
+        font-weight: 700;
+        font-size: 14px;
+      }
+      .dailyGoalProgressBar {
+        width: 100%;
+        height: 8px;
+        background: rgba(255,255,255,0.08);
+        border-radius: 999px;
+        overflow: hidden;
+        position: relative;
+      }
+      .dailyGoalProgressFill {
+        height: 100%;
+        background: linear-gradient(90deg, rgba(0,229,255,0.6), rgba(0,229,255,0.8));
+        border-radius: 999px;
+        transition: width 0.3s ease-out;
+        width: 0%;
+      }
+      .dailyGoalProgressFill.complete {
+        background: linear-gradient(90deg, rgba(52,211,153,0.6), rgba(52,211,153,0.8));
+      }
+      .calendarDailyGoal {
+        padding: 12px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 8px;
+        margin-bottom: 16px;
+        border: 1px solid var(--line);
+      }
+      .calendarDailyGoalHeader {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        margin-bottom: 8px;
+      }
+      .calendarDailyGoalTitle {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .calendarSessionInfo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        margin-bottom: 8px;
+      }
+      .calendarSessionInfoItem {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+        min-width: 0;
+      }
+      .calendarSessionInfoLabel {
+        font-size: 10px;
+        color: var(--muted2);
+        font-weight: 500;
+        white-space: nowrap;
+      }
+      .calendarSessionInfoValue {
+        font-size: 13px;
+        color: var(--text);
+        font-weight: 700;
+        white-space: nowrap;
+      }
+      .calendarSessionTags {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+      .calendarSessionTag {
+        padding: 3px 8px;
+        background: rgba(0,229,255,0.12);
+        border: 1px solid rgba(0,229,255,0.25);
+        border-radius: 5px;
+        font-size: 9px;
+        color: var(--accent);
+        font-weight: 600;
+        letter-spacing: 0.3px;
+      }
+
+      .grid {
+        display: grid;
+        gap: 14px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.05));
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .cardInner {
+        padding: 14px;
+        position: relative;
+      }
+
+      .bpmRow {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .bpmBig {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        min-width: 0;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        transition: all 0.15s ease-out;
+      }
+      .bpmBig .label {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .bpmBig .valueRow {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        user-select: none;
+        touch-action: manipulation;
+        justify-content: center;
+      }
+      .bpmAdjustBtn {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.08);
+        color: var(--text);
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        transition: all 0.2s;
+        touch-action: manipulation;
+        user-select: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .bpmAdjustBtn:hover {
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(0,229,255,0.3);
+      }
+      .bpmAdjustBtn:active {
+        background: rgba(0,229,255,0.2);
+        border-color: rgba(0,229,255,0.4);
+        transform: scale(0.95);
+      }
+      .bpmBig .value {
+        font-size: 44px;
+        font-weight: 800;
+        letter-spacing: -0.8px;
+        line-height: 1;
+        min-width: 60px;
+        text-align: center;
+      }
+      .bpmBig .unit {
+        font-size: 14px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .tapTempoBtn {
+        margin-top: 12px;
+        padding: 10px 24px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text);
+        background: rgba(255,255,255,0.08);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        touch-action: manipulation;
+        user-select: none;
+        width: 100%;
+      }
+      .tapTempoBtn:hover {
+        background: rgba(255,255,255,0.12);
+        border-color: rgba(255,255,255,0.2);
+      }
+      .tapTempoBtn:active {
+        background: rgba(0,229,255,0.2);
+        border-color: rgba(0,229,255,0.4);
+        transform: scale(0.98);
+      }
+      .bpmSliderRow {
+        margin-top: 10px;
+        width: 100%;
+      }
+      .bpmSliderRow input[type="range"] {
+        width: 100%;
+        appearance: none;
+        height: 4px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(0,229,255,0.45), rgba(255,255,255,0.40));
+        outline: none;
+      }
+      .bpmSliderRow input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0b0f17;
+        border: 2px solid rgba(0,229,255,0.90);
+        box-shadow: 0 0 0 4px rgba(0,229,255,0.28);
+        cursor: pointer;
+      }
+      .bpmSliderRow input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0b0f17;
+        border: 2px solid rgba(0,229,255,0.90);
+        box-shadow: 0 0 0 4px rgba(0,229,255,0.28);
+        cursor: pointer;
+      }
+      .bpmSliderRow input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 999px;
+        background: transparent;
+      }
+      .bpmSliderRow input[type="range"]::-moz-range-track {
+        height: 4px;
+        border-radius: 999px;
+        background: transparent;
+      }
+
+      .swingRow {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .swingRow .label {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.2px;
+        flex-shrink: 0;
+      }
+      .swingRow .value {
+        font-size: 13px;
+        font-weight: 800;
+        color: var(--accent2);
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+        min-width: 36px;
+        text-align: right;
+      }
+      .swingSliderRow {
+        flex: 1;
+        min-width: 0;
+      }
+      .swingSliderRow input[type="range"] {
+        width: 100%;
+        appearance: none;
+        height: 4px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(255,255,255,0.45), rgba(0,229,255,0.40));
+        outline: none;
+      }
+      .swingSliderRow input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0b0f17;
+        border: 2px solid rgba(255,255,255,0.90);
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.28);
+        cursor: pointer;
+      }
+      .swingSliderRow input[type="range"]::-moz-range-thumb {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #0b0f17;
+        border: 2px solid rgba(255,255,255,0.90);
+        box-shadow: 0 0 0 4px rgba(255,255,255,0.28);
+        cursor: pointer;
+      }
+      .swingSliderRow input[type="range"]::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 999px;
+        background: transparent;
+      }
+      .swingSliderRow input[type="range"]::-moz-range-track {
+        height: 4px;
+        border-radius: 999px;
+        background: transparent;
+      }
+
+      .sectionLabel {
+        font-size: 11px;
+        color: var(--muted2);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+
+      .controlsRow {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .bigButton {
+        min-height: 64px;
+        border-radius: 16px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.06);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        cursor: pointer;
+        touch-action: manipulation;
+        user-select: none;
+        font-weight: 900;
+        letter-spacing: 0.8px;
+      }
+      .bigButton.playing {
+        background: linear-gradient(180deg, rgba(0,229,255,0.20), rgba(0,229,255,0.08));
+        border-color: rgba(0,229,255,0.22);
+      }
+      .bigButton .small {
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .seg,
+      .grooveSeg {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .seg button,
+      .grooveSeg button {
+        padding: 12px 10px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.05);
+        cursor: pointer;
+        touch-action: manipulation;
+        user-select: none;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      .seg button[aria-pressed="true"],
+      .grooveSeg button[aria-pressed="true"] {
+        background: linear-gradient(180deg, rgba(0,229,255,0.22), rgba(0,229,255,0.10));
+        border-color: rgba(0,229,255,0.26);
+      }
+      .segNote {
+        margin-top: 10px;
+        font-size: 12px;
+        color: var(--muted);
+        min-height: 18px;
+      }
+
+      .ghostModeRow {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .ghostModeRow .label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.2px;
+      }
+
+      .progressiveModeRow {
+        position: absolute;
+        top: 50px;
+        right: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .progressiveModeRow .label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: 0.2px;
+      }
+
+
+
+      .toggleSwitch {
+        position: relative;
+        width: 50px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+      .toggleSwitch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .toggleSwitch .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.12);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        transition: 0.25s;
+      }
+      .toggleSwitch .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 3px;
+        bottom: 3px;
+        background: rgba(255,255,255,0.85);
+        border-radius: 50%;
+        transition: 0.25s;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      }
+      .toggleSwitch input:checked + .slider {
+        background: linear-gradient(180deg, rgba(0,229,255,0.35), rgba(0,229,255,0.20));
+        border-color: rgba(0,229,255,0.40);
+      }
+      .toggleSwitch input:checked + .slider:before {
+        transform: translateX(22px);
+        background: var(--accent);
+      }
+
+      .timelineWrap {
+        padding: 14px;
+      }
+      .timelineHeader {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .timelineHeader .left {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .timelineHeader .left .title {
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        display: none;
+      }
+      .timelineHeader .left .meta {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .timelineHeader .right {
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      canvas {
+        width: 100%;
+        height: 110px;
+        display: block;
+        border-radius: 16px;
+        background: rgba(0,0,0,0.18);
+        border: 1px solid rgba(255,255,255,0.10);
+      }
+
+      details {
+        border-top: 1px solid rgba(255,255,255,0.10);
+        margin-top: 12px;
+        padding-top: 12px;
+      }
+      summary {
+        cursor: pointer;
+        user-select: none;
+        color: var(--muted);
+        font-weight: 700;
+        list-style: none;
+      }
+      summary::-webkit-details-marker { display: none; }
+
+      .sliders {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+      }
+      .sliderRow {
+        display: grid;
+        grid-template-columns: 108px 1fr 44px;
+        gap: 10px;
+        align-items: center;
+      }
+      .sliderRow .name {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .sliderRow input[type="range"] {
+        width: 100%;
+      }
+      .sliderRow .val {
+        font-variant-numeric: tabular-nums;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: right;
+      }
+
+      .footer {
+        margin-top: auto;
+        padding-top: 6px;
+        color: var(--muted2);
+        font-size: 12px;
+        line-height: 1.35;
+        display: none;
+      }
+      .footer a { color: var(--accent); text-decoration: none; }
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: calc(16px + var(--safe-bottom));
+        transform: translateX(-50%);
+        background: rgba(0,0,0,0.70);
+        color: rgba(255,255,255,0.92);
+        padding: 10px 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.14);
+        box-shadow: 0 16px 40px rgba(0,0,0,0.40);
+        max-width: min(520px, calc(100% - 24px));
+        display: none;
+        font-size: 12px;
+      }
+      .toast.show { display: block; }
+
+      @media (max-width: 420px) {
+        .bpmBtns { min-width: 150px; }
+        .bpmBig .value { font-size: 40px; }
+        canvas { height: 104px; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="app">
+      <header>
+        <div class="brand">
+          <div class="title">RAP FLOW COACH</div>
+          <div class="subtitle">iPhone Safari 友善 · 精準排程 · 離線可用</div>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center; flex-shrink: 0;">
+          <button type="button" class="calendarBtn" id="calendarBtn" aria-label="查看訓練日曆">
+            <span>📅</span>
+          </button>
+          <div id="statePill" class="pill" data-state="stopped" role="status" aria-live="polite">
+            <span class="dot" aria-hidden="true"></span>
+            <span class="stateText" id="stateText">STANDBY</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Daily Goal Progress -->
+      <section class="card" id="dailyGoalCard">
+        <div class="cardInner">
+          <div class="dailyGoalHeader">
+            <div class="dailyGoalTitle">
+              <span>今日目標（20分鐘）</span>
+            </div>
+            <div class="dailyGoalProgressInfo" id="dailyGoalProgressInfo">
+              <span id="dailyGoalProgressText">0 / 20 分鐘</span>
+              <span id="dailyGoalProgressPercent">0%</span>
+            </div>
+          </div>
+          <div class="dailyGoalProgressBar">
+            <div class="dailyGoalProgressFill" id="dailyGoalProgressFill"></div>
+          </div>
+        </div>
+      </section>
+
+      <div class="grid">
+        <section class="card">
+          <div class="timelineWrap">
+            <div class="sectionLabel">TIMELINE</div>
+            <div class="timelineHeader">
+              <div class="left">
+                <div class="title">BEAT MATRIX (節拍矩陣)</div>
+                <div class="meta" id="timelineMeta">4/4 · 1/4 · Bar 1</div>
+              </div>
+            </div>
+            <canvas id="timeline" width="900" height="220" aria-label="視覺時間軸"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="cardInner">
+            <div class="sectionLabel">TEMPO &amp; SUBDIVISION</div>
+            <div class="bpmRow">
+              <div class="bpmBig" id="bpmDrag" aria-label="BPM 調整區（可左右滑動調整）">
+                <div class="valueRow">
+                  <button type="button" class="bpmAdjustBtn" id="bpmDecreaseBtn" aria-label="減少 BPM">−</button>
+                  <div class="value" id="bpmValue">92</div>
+                  <div class="unit">BPM</div>
+                  <button type="button" class="bpmAdjustBtn" id="bpmIncreaseBtn" aria-label="增加 BPM">+</button>
+                </div>
+              </div>
+              <div class="bpmSliderRow">
+                <input id="bpmSlider" type="range" min="40" max="240" step="1" value="92" aria-label="BPM 橫桿調整" />
+              </div>
+              <button type="button" class="tapTempoBtn" id="tapTempoBtn" aria-label="Tap Tempo 拍速檢測">
+                <span>TAP</span>
+              </button>
+            </div>
+
+            <div class="swingRow">
+              <div class="label">Groove</div>
+              <div class="swingSliderRow">
+                <input id="swingSlider" type="range" min="0" max="100" step="1" value="0" aria-label="Groove 調整" />
+              </div>
+              <div class="value" id="swingValue">0%</div>
+            </div>
+
+
+            <div class="seg" role="group" aria-label="節奏細分控制">
+              <button type="button" class="segBtn" data-division="1" aria-pressed="true">1/4</button>
+              <button type="button" class="segBtn" data-division="2" aria-pressed="false">1/8</button>
+              <button type="button" class="segBtn" data-division="4" aria-pressed="false">1/16</button>
+              <button type="button" class="segBtn" data-division="3" aria-pressed="false">Triplet</button>
+            </div>
+            <div class="segNote" id="segNote" aria-live="polite"></div>
+
+            <div class="ghostModeRow">
+              <div class="label">GHOST BEAT</div>
+              <label class="toggleSwitch">
+                <input type="checkbox" id="ghostModeToggle" aria-label="GHOST BEAT 開關" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="progressiveModeRow">
+              <div class="label">Step</div>
+              <label class="toggleSwitch">
+                <input type="checkbox" id="progressiveModeToggle" aria-label="Step 自動提速 開關" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="grooveSeg" role="group" aria-label="曲風風格預設">
+              <button type="button" class="grooveBtn" data-groove="standard" aria-pressed="true">Standard</button>
+              <button type="button" class="grooveBtn" data-groove="boombap" aria-pressed="false">Boom Bap</button>
+              <button type="button" class="grooveBtn" data-groove="trap" aria-pressed="false">Trap</button>
+              <button type="button" class="grooveBtn" data-groove="reggae" aria-pressed="false">Reggae</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="controlsRow">
+        <button class="bigButton" id="btnPlay" type="button" aria-label="開始或停止">
+          <span id="playLabel">START</span>
+          <span class="small" id="playSub">點擊以解鎖音訊</span>
+        </button>
+      </div>
+
+      <div class="footer">
+        PWA：在 Safari 分享選單選「加入主畫面」即可離線使用。
+      </div>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    
+    <!-- Calendar Modal -->
+    <div class="calendarModal" id="calendarModal">
+      <div class="calendarContent">
+        <div class="calendarHeader">
+          <h2>訓練日曆</h2>
+          <button type="button" class="calendarCloseBtn" id="calendarCloseBtn">關閉</button>
+        </div>
+        <div class="calendarBody">
+          <!-- Daily Goal Progress in Calendar -->
+          <div class="calendarDailyGoal" id="calendarDailyGoal">
+            <div class="calendarDailyGoalHeader">
+              <div class="calendarDailyGoalTitle">今日目標進度（20分鐘）</div>
+            </div>
+            <div class="dailyGoalProgressInfo" id="calendarDailyGoalProgressInfo">
+              <span id="calendarDailyGoalProgressText">0 / 20 分鐘</span>
+              <span id="calendarDailyGoalProgressPercent">0%</span>
+            </div>
+            <div class="dailyGoalProgressBar">
+              <div class="dailyGoalProgressFill" id="calendarDailyGoalProgressFill"></div>
+            </div>
+          </div>
+          <div class="calendarStats">
+            <div class="calendarStatsTitle">統計</div>
+            <div class="calendarStatsGrid" id="calendarStats">
+              <!-- Stats will be populated by JS -->
+            </div>
+          </div>
+          <div class="calendarNav">
+            <button type="button" class="calendarNavBtn" id="calendarPrevMonth">‹</button>
+            <div class="calendarMonthYear" id="calendarMonthYear"></div>
+            <button type="button" class="calendarNavBtn" id="calendarNextMonth">›</button>
+            <button type="button" class="calendarTodayBtn" id="calendarTodayBtn">回到今天</button>
+          </div>
+          <div class="calendarGrid" id="calendarGrid">
+            <!-- Calendar will be populated by JS -->
+          </div>
+          <div class="calendarDayDetail" id="calendarDayDetail" style="display: none;">
+            <!-- Day detail will be populated by JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        "use strict";
+
+        // ===== Utilities =====
+        const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
+
+        function showToast(msg, ms = 1400) {
+          const el = document.getElementById("toast");
+          el.textContent = msg;
+          el.classList.add("show");
+          window.clearTimeout(showToast._t);
+          showToast._t = window.setTimeout(() => el.classList.remove("show"), ms);
+        }
+
+        function formatDivision(div) {
+          if (div === 1) return "1/4";
+          if (div === 2) return "1/8";
+          if (div === 4) return "1/16";
+          if (div === 3) return "Triplet";
+          return String(div);
+        }
+
+        const GROOVE_PRESETS = {
+          standard: {
+            label: "Standard",
+            division: 1,
+            // accent per beat (0-based): 2 = 強, 1 = 中, 0 = 弱
+            pattern4: [2, 1, 1, 1],
+          },
+          boombap: {
+            label: "Boom Bap",
+            division: 2, // 1/8 音符
+            pattern4: [1, 2, 1, 2], // 強調第 2 & 4 拍（永遠鎖定）
+          },
+          trap: {
+            label: "Trap",
+            division: 3, // Triplet（三連音）
+            pattern4: [2, 1, 2, 1], // 稍微強調每小節開頭與第三拍
+          },
+          reggae: {
+            label: "Reggae",
+            division: 2, // 1/8 音符
+            pattern4: [1, 2, 1, 2], // 第 2、4 拍強音（重音），模擬雷鬼/爵士的後半拍強調感
+          },
+        };
+
+        // ===== Cell Modes =====
+        const CELL_MODES = {
+          quarter: { label: "1/4", div: 1, step: 48 },      // 每拍 1 個點
+          eighth: { label: "1/8", div: 2, step: 24 },       // 每拍 2 個點
+          sixteenth: { label: "1/16", div: 4, step: 12 },  // 每拍 4 個點
+          triplet: { label: "Triplet", div: 3, step: 16 },   // 每拍 3 個點（三連音）
+        };
+        const CELL_MODE_ORDER = ["quarter", "eighth", "sixteenth", "triplet"];
+
+        // ===== Web Audio Metronome (Lookahead Scheduler) =====
+        class MetronomeEngine {
+          constructor() {
+            this.audio = null;
+            this.master = null;
+            this.isPlaying = false;
+
+            this.bpm = 92;
+            this.beatsPerBar = 4;
+            this.division = 1; // subdivisions per beat (1,2,3,4) - legacy, kept for compatibility
+            this.pendingDivision = null;
+
+            // Cell Editor: 每一拍的細分模式 (0-3 for 4 beats)
+            this.cellModes = ["quarter", "quarter", "quarter", "quarter"]; // 預設全部 1/4
+
+            this.nextTickTime = 0;
+            this.microIndex = 0; // 1/48 網格索引
+            this.lastTickTime = 0;
+
+            this.microDiv = 48; // 最小細分單位（1/48）
+            this.scheduleAheadTime = 0.16;
+            this.schedulerIntervalMs = 25;
+            this._timer = null;
+
+            this.gainDown = 0.85;
+            this.gainBeat = 0.65;
+            this.gainSub = 0.40;
+            
+            // Trap Snare 音色緩存（TR-808 Clap/Snare 混合音）
+            this._trapSnareBuffer = null;
+            
+            // Reggae 反拍音色緩存
+            this._reggaeOffbeatBuffer = null;
+
+            // UI sync hint
+            this._lastScheduledInfo = { bar: 1, beat: 1, sub: 1, isDownbeat: true, isBeatBoundary: true };
+
+            this.grooveName = "standard";
+            
+            // Boom Bap 音色緩存
+            this._boombapBuffers = {};
+
+            // Ghost Mode: 隨機空拍訓練
+            this.ghostMode = false;
+            this.ghostProbability = 0.15; // 15% 機率空拍
+            this._ghostState = {
+              isGhosting: false,
+              ghostUntilMicro: -1, // 空拍到哪個 microIndex
+            };
+
+            // Swing: 偶數拍延遲（0-100%，50% = 無 swing，66% = 經典 swing）
+            this.swing = 0; // 0-100
+
+            // Progressive Training Mode: 漸進式練習模式
+            this.progressiveMode = false;
+            this.initialBpm = 92; // 記錄開始時的 BPM
+            this.progressiveBarsPerStep = 4; // 每 4 小節提速一次
+            this.progressiveBpmIncrement = 2; // 每次增加 2 BPM
+            this.progressiveMaxBpm = 200; // 最大 BPM 限制
+            this._lastProgressiveBar = 0;
+            this._shouldFlashBpm = false; // 觸發視覺閃爍
+            
+            // 训练数据记录：当前会话
+            this._currentSession = null;
+            this._sessionStartTime = null;
+          }
+
+          async ensureAudioUnlocked() {
+            if (!this.audio) {
+              const AC = window.AudioContext || window.webkitAudioContext;
+              this.audio = new AC({ latencyHint: "interactive" });
+              this.master = this.audio.createGain();
+              this.master.gain.value = 0.9;
+              this.master.connect(this.audio.destination);
+            }
+            if (this.audio.state !== "running") {
+              await this.audio.resume();
+            }
+          }
+
+          setBpm(bpm) {
+            this.bpm = clamp(Math.round(bpm), 40, 240);
+          }
+
+          requestDivision(div) {
+            // Apply on next beat boundary for stable feel
+            if (div === this.division) return;
+            this.pendingDivision = div;
+          }
+
+          setGroove(name) {
+            if (!GROOVE_PRESETS[name]) return;
+            this.grooveName = name;
+          }
+
+          setGhostMode(enabled) {
+            this.ghostMode = enabled;
+            if (!enabled) {
+              // 關閉時重置 ghost state
+              this._ghostState.isGhosting = false;
+              this._ghostState.ghostUntilMicro = -1;
+            }
+          }
+
+          setSwing(percent) {
+            this.swing = clamp(Math.round(percent), 0, 100);
+          }
+
+          setProgressiveMode(enabled) {
+            this.progressiveMode = enabled;
+            if (enabled) {
+              // 啟用時記錄當前 BPM 作為起始點
+              this.initialBpm = this.bpm;
+              this._lastProgressiveBar = 0;
+            } else {
+              // 關閉時恢復到初始 BPM
+              this.bpm = this.initialBpm;
+            }
+          }
+
+
+          // 計算 swing 延遲（針對偶數拍）
+          _getSwingDelay(microInBar) {
+            if (this.swing === 0 || this.swing === 50) return 0; // 無 swing
+            
+            const beatIdx = Math.floor(microInBar / this.microDiv); // 0-3
+            const isEvenBeat = (beatIdx === 1 || beatIdx === 3); // 第 2、4 拍（0-based: 1, 3）
+            
+            if (!isEvenBeat) return 0; // 奇數拍不延遲
+            
+            // Swing 計算：從 50% 開始，每增加 1% 延遲約 0.4% 的拍長
+            // 66% swing = 經典 triplet swing（延遲約 6.4%）
+            const swingOffset = (this.swing - 50) / 50; // -1 到 1
+            const secPerBeat = 60 / this.bpm;
+            const delay = swingOffset * secPerBeat * 0.16; // 最大延遲約 16% 拍長
+            
+            return Math.max(0, delay);
+          }
+
+          // 計算 Boom Bap 風格的 swing 延遲（針對 1/8 音符的反拍）
+          _getBoomBapSwingDelay(posInBeat, cellMode) {
+            // 只在 1/8 音符模式下應用 58% swing
+            if (cellMode !== "eighth") return 0;
+            
+            // 1/8 音符：posInBeat = 0 (on-beat), posInBeat = 24 (off-beat '&')
+            // 只在 off-beat 時應用延遲
+            if (posInBeat !== 24) return 0;
+            
+            // 58% swing: 計算延遲
+            // 58% = (58 - 50) / 50 = 0.16 的 swing offset
+            const swingOffset = (58 - 50) / 50; // 0.16
+            const secPerBeat = 60 / this.bpm;
+            const delay = swingOffset * secPerBeat * 0.16; // 約 3.2% 拍長的延遲
+            
+            return Math.max(0, delay);
+          }
+
+          // 檢查是否是 1/16 音符的 'e' 或 'a' 位置（ghost notes）
+          _isSixteenthGhostNote(posInBeat) {
+            // 1/16 音符：posInBeat = 0 ('1'), 12 ('e'), 24 ('&'), 36 ('a')
+            // 'e' 和 'a' 是 ghost notes
+            return posInBeat === 12 || posInBeat === 36;
+          }
+
+          // Cell Editor: 設定整小節為同一模式（模板功能）
+          setAllCellsToMode(mode) {
+            if (!CELL_MODES[mode]) return;
+            for (let i = 0; i < this.beatsPerBar; i++) {
+              this.cellModes[i] = mode;
+            }
+          }
+
+          // Cell Editor: 切換單一拍的模式
+          cycleCellMode(beatIndex) {
+            if (beatIndex < 0 || beatIndex >= this.beatsPerBar) return;
+            const current = this.cellModes[beatIndex];
+            const idx = CELL_MODE_ORDER.indexOf(current);
+            const nextIdx = (idx + 1) % CELL_MODE_ORDER.length;
+            this.cellModes[beatIndex] = CELL_MODE_ORDER[nextIdx];
+            return this.cellModes[beatIndex];
+          }
+
+          // 取得某一拍的模式
+          getCellMode(beatIndex) {
+            return this.cellModes[beatIndex] || "quarter";
+          }
+
+          // 檢查在 1/48 網格中，某個位置是否應該打點
+          _shouldTickAtMicro(microInBar) {
+            const beatIdx = Math.floor(microInBar / this.microDiv); // 0-3
+            const posInBeat = microInBar % this.microDiv; // 0-47
+            const mode = this.getCellMode(beatIdx);
+            const cellDef = CELL_MODES[mode];
+            if (!cellDef) return false;
+            return posInBeat % cellDef.step === 0;
+          }
+
+          _microIntervalSec() {
+            const secPerBeat = 60 / this.bpm;
+            return secPerBeat / this.microDiv;
+          }
+
+          _tickIntervalSec(currentDivision = this.division) {
+            const secPerBeat = 60 / this.bpm;
+            return secPerBeat / currentDivision;
+          }
+
+          _ticksPerBar(currentDivision = this.division) {
+            return this.beatsPerBar * currentDivision;
+          }
+
+          // 檢查是否是 Reggae 的反拍位置（支持所有細分）
+          _isReggaeOffbeat(cellMode, posInBeat) {
+            if (cellMode === "quarter") {
+              return false; // 1/4 沒有細分，沒有反拍
+            } else if (cellMode === "eighth") {
+              // 1/8: 第二個八分音符（posInBeat === 24）
+              return posInBeat === 24;
+            } else if (cellMode === "sixteenth") {
+              // 1/16: 第二、四個十六分音符（posInBeat === 12, 36）
+              return posInBeat === 12 || posInBeat === 36;
+            } else if (cellMode === "triplet") {
+              // Triplet: 第二個三連音（posInBeat === 16）
+              return posInBeat === 16;
+            }
+            return false;
+          }
+
+          // 生成 Reggae 風格的反拍音色（用於 Reggae 風格的反拍）
+          _createReggaeOffbeatSound() {
+            if (this._reggaeOffbeatBuffer) return this._reggaeOffbeatBuffer;
+            
+            const sampleRate = this.audio.sampleRate;
+            const duration = 0.10; // 稍長，更有彈性
+            const length = Math.floor(sampleRate * duration);
+            const buffer = this.audio.createBuffer(1, length, sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // Reggae 反拍特徵：
+            // 1. 中頻正弦波（模擬吉他或鍵盤的彈撥聲）
+            // 2. 輕微的白噪音（模擬打擊感）
+            // 3. 較慢的衰減（更有彈性）
+            
+            for (let i = 0; i < length; i++) {
+              const t = i / sampleRate;
+              
+              // 中頻正弦波（約 400-500Hz，模擬吉他彈撥）
+              let tone = 0;
+              const fundamental = 450;
+              const harmonics = [1, 1.5, 2]; // 諧波
+              harmonics.forEach((harmonic, idx) => {
+                const amp = idx === 0 ? 0.4 : 0.2 / idx;
+                tone += Math.sin(2 * Math.PI * fundamental * harmonic * t) * amp;
+              });
+              
+              // 輕微白噪音（打擊感）
+              const noise = (Math.random() * 2 - 1) * 0.3;
+              
+              // 包絡：快速攻擊，較慢衰減（更有彈性）
+              let envelope = 1.0;
+              if (t < 0.002) {
+                envelope = t / 0.002;
+              } else {
+                envelope = Math.exp(-t / 0.04); // 較慢的衰減
+              }
+              
+              // 混合音色，應用包絡
+              data[i] = (tone * 0.7 + noise * 0.3) * envelope;
+            }
+            
+            this._reggaeOffbeatBuffer = buffer;
+            return buffer;
+          }
+
+          // 生成 Boom Bap 風格的鼓聲音色（用於 Boom Bap 風格）
+          _createBoomBapSound(type) {
+            const cacheKey = `boombap_${type}`;
+            if (this._boombapBuffers[cacheKey]) {
+              return this._boombapBuffers[cacheKey];
+            }
+            
+            const sampleRate = this.audio.sampleRate;
+            let duration = 0.15;
+            let buffer;
+            let data;
+            
+            if (type === "kick") {
+              // Kick: Deep, punchy kick using Sine wave with rapid pitch envelope decay
+              // Add slight distortion/low-pass filter for "dusty" 90s vinyl sound
+              duration = 0.25;
+              const length = Math.floor(sampleRate * duration);
+              buffer = this.audio.createBuffer(1, length, sampleRate);
+              data = buffer.getChannelData(0);
+              
+              const startFreq = 60; // 起始頻率
+              const endFreq = 30;  // 結束頻率（快速音高衰減）
+              
+              for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+                
+                // 音高包絡：快速衰減（模擬 "thud" 聲）
+                const pitchEnv = startFreq + (endFreq - startFreq) * Math.exp(-t * 20);
+                
+                // 正弦波
+                let sample = Math.sin(2 * Math.PI * pitchEnv * t);
+                
+                // 輕微失真（模擬黑膠唱片的 "dusty" 感）
+                sample = Math.tanh(sample * 1.2) * 0.85;
+                
+                // 低通濾波效果（模擬黑膠的溫暖感）
+                // 簡單實現：衰減高頻成分
+                const lowpassEnv = Math.exp(-t * 8);
+                sample *= lowpassEnv;
+                
+                // 包絡：快速攻擊，中等衰減
+                let envelope = 1.0;
+                if (t < 0.003) {
+                  envelope = t / 0.003;
+                } else {
+                  envelope = Math.exp(-t * 6);
+                }
+                
+                data[i] = sample * envelope * 0.9;
+              }
+            } else if (type === "snare") {
+              // Snare: Dry, crisp snare using White Noise + short triangle wave body
+              // Should sound tight, not reverb-heavy
+              duration = 0.12;
+              const length = Math.floor(sampleRate * duration);
+              buffer = this.audio.createBuffer(1, length, sampleRate);
+              data = buffer.getChannelData(0);
+              
+              for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+                
+                // 白噪音（主要成分）
+                const noise = (Math.random() * 2 - 1) * 0.7;
+                
+                // 短三角波體（增加緊實感）
+                const triangleFreq = 200;
+                const trianglePhase = (t * triangleFreq) % 1;
+                let triangle = trianglePhase < 0.5 
+                  ? 4 * trianglePhase - 1 
+                  : 3 - 4 * trianglePhase;
+                triangle *= 0.3;
+                
+                // 混合噪音和三角波
+                let sample = noise + triangle;
+                
+                // 包絡：極快攻擊，快速衰減（保持乾燥、緊實）
+                let envelope = 1.0;
+                if (t < 0.001) {
+                  envelope = t / 0.001;
+                } else {
+                  envelope = Math.exp(-t * 15); // 快速衰減，無混響
+                }
+                
+                data[i] = sample * envelope * 0.85;
+              }
+            } else if (type === "hihat") {
+              // Hi-Hat: Short, high-frequency metal sound using high-pass filtered noise
+              duration = 0.06;
+              const length = Math.floor(sampleRate * duration);
+              buffer = this.audio.createBuffer(1, length, sampleRate);
+              data = buffer.getChannelData(0);
+              
+              for (let i = 0; i < length; i++) {
+                const t = i / sampleRate;
+                
+                // 白噪音
+                const noise = (Math.random() * 2 - 1) * 0.6;
+                
+                // 高通濾波效果（模擬金屬聲）
+                // 簡單實現：增加高頻成分，減少低頻
+                const highpassEnv = 1 - Math.exp(-t * 30); // 快速去除低頻
+                let sample = noise * highpassEnv;
+                
+                // 高頻正弦波疊加（增加金屬感）
+                const metalFreq = 8000;
+                const metalTone = Math.sin(2 * Math.PI * metalFreq * t) * 0.2;
+                sample += metalTone;
+                
+                // 包絡：極快攻擊，快速衰減
+                let envelope = 1.0;
+                if (t < 0.0005) {
+                  envelope = t / 0.0005;
+                } else {
+                  envelope = Math.exp(-t * 25);
+                }
+                
+                data[i] = sample * envelope * 0.75;
+              }
+            }
+            
+            if (buffer) {
+              this._boombapBuffers[cacheKey] = buffer;
+              return buffer;
+            }
+            
+            // Fallback
+            const fallbackLength = Math.floor(sampleRate * 0.1);
+            const fallbackBuffer = this.audio.createBuffer(1, fallbackLength, sampleRate);
+            return fallbackBuffer;
+          }
+          
+          // 生成 TR-808 風格的 Clap/Snare 混合音（用於 Trap 風格）
+          _createTrapSnareSound() {
+            if (this._trapSnareBuffer) return this._trapSnareBuffer;
+            
+            const sampleRate = this.audio.sampleRate;
+            const duration = 0.08; // 更短、更脆
+            const length = Math.floor(sampleRate * duration);
+            const buffer = this.audio.createBuffer(1, length, sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // TR-808 Clap/Snare 特徵：
+            // 1. 高頻正弦波（模擬 Snare 的響弦）
+            // 2. 白噪音（模擬 Clap 的拍擊聲）
+            // 3. 快速衰減
+            
+            for (let i = 0; i < length; i++) {
+              const t = i / sampleRate;
+              
+              // 高頻正弦波（Snare 響弦，約 200-300Hz 的諧波）
+              let snare = 0;
+              const snareFreq = 250;
+              const snareHarmonics = [1, 2, 3, 4]; // 多個諧波
+              snareHarmonics.forEach((harmonic, idx) => {
+                const amp = 0.3 / (idx + 1); // 諧波衰減
+                snare += Math.sin(2 * Math.PI * snareFreq * harmonic * t) * amp;
+              });
+              
+              // 白噪音（Clap 拍擊聲）
+              const noise = (Math.random() * 2 - 1) * 0.6;
+              
+              // 包絡：快速攻擊，快速衰減
+              let envelope = 1.0;
+              if (t < 0.001) {
+                // 極快攻擊
+                envelope = t / 0.001;
+              } else {
+                // 快速指數衰減
+                envelope = Math.exp(-t / 0.015);
+              }
+              
+              // 混合 Snare 和 Clap，應用包絡
+              data[i] = (snare * 0.4 + noise * 0.6) * envelope;
+            }
+            
+            this._trapSnareBuffer = buffer;
+            return buffer;
+          }
+
+          _scheduleClick(time, { isDownbeat, isBeatBoundary, accentLevel, cellMode, posInBeat, beatIdx = 0 }) {
+            const level = accentLevel ?? (isDownbeat ? 2 : isBeatBoundary ? 1 : 0);
+            
+            // Trap 風格：使用 TR-808 Clap/Snare 混合音（僅用於 Snare，即 level >= 1）
+            if (this.grooveName === "trap" && level >= 1) {
+              const buffer = this._createTrapSnareSound();
+              const source = this.audio.createBufferSource();
+              const gain = this.audio.createGain();
+              
+              source.buffer = buffer;
+              const amp = level >= 2 ? this.gainDown : this.gainBeat;
+              gain.gain.setValueAtTime(amp, time);
+              
+              source.connect(gain);
+              gain.connect(this.master);
+              
+              source.start(time);
+              source.stop(time + buffer.duration);
+              return;
+            }
+            
+            // Reggae 風格：反拍使用特殊音色（level >= 2 且是反拍）
+            if (this.grooveName === "reggae" && level >= 2 && !isBeatBoundary) {
+              const buffer = this._createReggaeOffbeatSound();
+              const source = this.audio.createBufferSource();
+              const gain = this.audio.createGain();
+              
+              source.buffer = buffer;
+              gain.gain.setValueAtTime(this.gainDown, time);
+              
+              source.connect(gain);
+              gain.connect(this.master);
+              
+              source.start(time);
+              source.stop(time + buffer.duration);
+              return;
+            }
+            
+            // Boom Bap 風格：使用特殊音色合成
+            if (this.grooveName === "boombap") {
+              let drumType;
+              let amp;
+              
+              // Boom Bap 特殊音量處理：
+              // level 2: Heavy accent (Beat 2 & 4, hard snare) - 使用 snare
+              // level 1.8: Beat 1 (strong but slightly less) - 使用 kick，音量稍低
+              // level 1.6: 1/8 off-beat (80% velocity, loud hi-hats) - 使用 hihat，音量較高
+              // level 1: Medium accent (Beat 3) - 使用 kick
+              // level 0.35: Ghost notes ('e' and 'a' in 1/16) - 使用 hihat，音量很低
+              // level 0: 其他
+              
+              // 1/16 音符特殊處理：on-beat 使用 kick/snare，off-beat 使用 hi-hat
+              if (cellMode === "sixteenth" && !isBeatBoundary) {
+                // 所有 1/16 的 off-beat 都使用 hi-hat
+                drumType = "hihat";
+                if (level >= 0.3 && this._isSixteenthGhostNote && this._isSixteenthGhostNote(posInBeat)) {
+                  // 'e' and 'a': Ghost notes (30-40% velocity)
+                  amp = this.gainSub * 0.35; // 35% of gainSub
+                } else if (posInBeat === 24) {
+                  // '&': Off-beat, medium volume
+                  amp = this.gainSub * 0.6; // 60% of gainSub
+                } else {
+                  // 其他 off-beat: 較小音量
+                  amp = this.gainSub * 0.4;
+                }
+              } else if (level >= 2) {
+                // Beat 2 & 4: Hard snare
+                drumType = "snare";
+                amp = this.gainBeat;
+              } else if (level >= 1.8) {
+                // Beat 1: Strong but slightly less than snare (使用 kick，音量稍低)
+                drumType = "kick";
+                amp = this.gainDown * 0.9; // 90% of gainDown
+              } else if (level >= 1.6) {
+                // 1/8 off-beat: Loud hi-hats (80% velocity)
+                drumType = "hihat";
+                amp = this.gainBeat * 0.8; // 80% of gainBeat (響亮的 hi-hats)
+              } else if (level >= 1) {
+                // Beat 3: Medium accent (kick)
+                drumType = "kick";
+                amp = this.gainDown * 0.7; // 70% of gainDown
+              } else if (level >= 0.3) {
+                // Ghost notes ('e' and 'a' in 1/16): Very quiet (30-40% velocity)
+                drumType = "hihat";
+                amp = this.gainSub * 0.35; // 35% of gainSub (ghost note)
+              } else {
+                // 其他：靜音或極小音量
+                drumType = "hihat";
+                amp = this.gainSub * 0.1;
+              }
+              
+              const buffer = this._createBoomBapSound(drumType);
+              const source = this.audio.createBufferSource();
+              const gain = this.audio.createGain();
+              
+              source.buffer = buffer;
+              gain.gain.setValueAtTime(amp, time);
+              
+              source.connect(gain);
+              gain.connect(this.master);
+              
+              source.start(time);
+              source.stop(time + buffer.duration);
+              return;
+            }
+            
+            // 使用鼓組音色
+            let drumType;
+            let amp;
+            
+            if (level >= 2) {
+              drumType = "kick";
+              amp = this.gainDown;
+            } else if (level === 1) {
+              drumType = "snare";
+              amp = this.gainBeat;
+            } else {
+              drumType = "hihat";
+              amp = this.gainSub;
+            }
+            
+            // 使用標準 oscillator click（電子高頻點擊）
+            const osc = this.audio.createOscillator();
+            const gain = this.audio.createGain();
+
+            const dur = 0.030;
+            const attack = 0.002;
+
+            let freq = 1050;
+            if (level >= 2) {
+              freq = 2050;
+            } else if (level === 1) {
+              freq = 1500;
+            }
+
+            osc.type = "square";
+            osc.frequency.setValueAtTime(freq, time);
+
+            gain.gain.setValueAtTime(0.0001, time);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, amp), time + attack);
+            gain.gain.exponentialRampToValueAtTime(0.0001, time + dur);
+
+            osc.connect(gain);
+            gain.connect(this.master);
+
+            osc.start(time);
+            osc.stop(time + dur + 0.01);
+          }
+
+          _schedulerStep(onScheduledTick) {
+            if (!this.isPlaying) return;
+            const audioNow = this.audio.currentTime;
+            const limit = audioNow + this.scheduleAheadTime;
+            const microInterval = this._microIntervalSec();
+            const microsPerBar = this.beatsPerBar * this.microDiv; // 4 * 48 = 192
+
+            while (this.nextTickTime < limit) {
+              const microInBar = this.microIndex % microsPerBar;
+              const beatIdx = Math.floor(microInBar / this.microDiv); // 0-3
+              const posInBeat = microInBar % this.microDiv; // 0-47
+
+              // 檢查這個 micro 位置是否應該打點（根據 cell mode）
+              if (this._shouldTickAtMicro(microInBar)) {
+                const isDownbeat = microInBar === 0;
+                const isBeatBoundary = posInBeat === 0;
+
+                // Ghost Mode: 隨機空拍邏輯
+                let shouldGhost = false;
+                if (this.ghostMode) {
+                  // 如果當前在 ghost 狀態中，檢查是否應該結束
+                  if (this._ghostState.isGhosting) {
+                    if (this.microIndex > this._ghostState.ghostUntilMicro) {
+                      this._ghostState.isGhosting = false;
+                      this._ghostState.ghostUntilMicro = -1;
+                    } else {
+                      shouldGhost = true; // 繼續 ghost
+                    }
+                  } else {
+                    // 隨機決定是否開始 ghost（只在拍點時決定，避免過於頻繁）
+                    if (isBeatBoundary && Math.random() < this.ghostProbability) {
+                      // 空拍持續 1-2 拍（隨機）
+                      const ghostBeats = Math.random() < 0.5 ? 1 : 2;
+                      const ghostMicros = ghostBeats * this.microDiv;
+                      this._ghostState.isGhosting = true;
+                      this._ghostState.ghostUntilMicro = this.microIndex + ghostMicros;
+                      shouldGhost = true;
+                    }
+                  }
+                }
+
+                // 只有在非 ghost 狀態時才播放聲音
+                if (!shouldGhost) {
+                  // Groove accent: 根據風格決定重音
+                  let accentLevel = 0;
+                  const preset = GROOVE_PRESETS[this.grooveName] || GROOVE_PRESETS.standard;
+                  const pattern = preset.pattern4 || GROOVE_PRESETS.standard.pattern4;
+                  
+                  if (isBeatBoundary) {
+                    // 拍點（on-beat）：使用 pattern 的重音級別
+                    if (this.grooveName === "boombap") {
+                      // Boom Bap 特殊處理：Quarter Notes
+                      // Beat 2 & 4: Heavy accents (level 2, simulating hard snare)
+                      // Beat 1: Strong but slightly less than snare (level 1.8, 使用 2 但音量稍低)
+                      // Beat 3: Medium accent (level 1)
+                      const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                      if (beatIdx === 0) {
+                        // Beat 1: Strong but slightly less than snare
+                        accentLevel = 1.8; // 使用 1.8 表示強但略小於 level 2
+                      } else if (beatIdx === 1 || beatIdx === 3) {
+                        // Beat 2 & 4: Heavy accents (hard snare)
+                        accentLevel = 2;
+                      } else {
+                        // Beat 3: Medium accent
+                        accentLevel = 1;
+                      }
+                    } else if (this.grooveName === "reggae") {
+                      // Reggae 特殊處理：重音在 off-beat，所以 on-beat 降低重音
+                      const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                      if (beatAccent >= 2) {
+                        accentLevel = 1; // 第 2、4 拍的 on-beat 降為中等重音（重音在 off-beat）
+                      } else {
+                        accentLevel = beatAccent; // 其他拍保持原樣
+                      }
+                    } else {
+                      accentLevel = pattern[beatIdx % pattern.length] ?? 1;
+                    }
+                  } else {
+                    // 細分點（off-beat 或其他細分）
+                    const cellMode = this.getCellMode(beatIdx);
+                    
+                    if (this.grooveName === "boombap") {
+                      // Boom Bap 特殊處理
+                      if (cellMode === "eighth") {
+                        // Eighth Notes: CRITICAL - Apply 58% Swing/Shuffle
+                        // Off-beat ('&') should have velocity ~80% (loud hi-hats)
+                        if (posInBeat === 24) {
+                          // Off-beat: velocity 80% (level 1.6)
+                          accentLevel = 1.6;
+                        } else {
+                          // On-beat: 使用拍點的重音
+                          accentLevel = 0;
+                        }
+                      } else if (cellMode === "sixteenth") {
+                        // Sixteenth Notes: 'Funky Drummer' feel
+                        // 'e' and 'a' subdivisions very quiet (Velocity 30-40) as ghost notes
+                        if (this._isSixteenthGhostNote(posInBeat)) {
+                          // 'e' and 'a': Ghost notes (level 0.3-0.4)
+                          accentLevel = 0.35;
+                        } else if (posInBeat === 24) {
+                          // '&': Off-beat, medium volume
+                          accentLevel = 1;
+                        } else {
+                          // On-beat: 使用拍點的重音
+                          accentLevel = 0;
+                        }
+                      } else {
+                        // Quarter Notes: 已在 isBeatBoundary 處理
+                        accentLevel = 0;
+                      }
+                    } else if (this.grooveName === "reggae") {
+                      // Reggae 特殊處理：第 2、4 拍的反拍（off-beat）有強重音
+                      // 模擬雷鬼/爵士的後半拍強調感
+                      // 支持所有細分：1/8, 1/16, triplet
+                      if (this._isReggaeOffbeat(cellMode, posInBeat)) {
+                        const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                        // 如果是第二拍或第四拍（重音拍），off-beat 有強重音
+                        if (beatAccent >= 2) {
+                          accentLevel = 2; // 第 2、4 拍的 off-beat 是強重音（後半拍強調）
+                        } else {
+                          accentLevel = 0; // 其他拍的 off-beat 無重音
+                        }
+                      } else {
+                        accentLevel = 0; // 其他細分點無重音
+                      }
+                    } else {
+                      // 其他風格：細分點通常無重音或弱重音
+                      accentLevel = 0;
+                    }
+                  }
+
+                  // Swing: 計算延遲
+                  let swingDelay = 0;
+                  if (this.grooveName === "boombap") {
+                    // Boom Bap: 對 1/8 音符應用特殊的 58% swing
+                    const cellMode = this.getCellMode(beatIdx);
+                    swingDelay = this._getBoomBapSwingDelay(posInBeat, cellMode);
+                    // 如果沒有應用 Boom Bap swing，使用通用 swing
+                    if (swingDelay === 0) {
+                      swingDelay = this._getSwingDelay(microInBar);
+                    }
+                  } else {
+                    swingDelay = this._getSwingDelay(microInBar);
+                  }
+                  const scheduledTime = this.nextTickTime + swingDelay;
+
+                  // 獲取當前的 cell mode 用於音色判斷
+                  const cellModeForClick = this.getCellMode(beatIdx);
+                  
+                  this._scheduleClick(scheduledTime, {
+                    isDownbeat,
+                    isBeatBoundary,
+                    accentLevel,
+                    cellMode: cellModeForClick,
+                    posInBeat,
+                    beatIdx,
+                  });
+                }
+
+                this.lastTickTime = this.nextTickTime;
+
+                // 計算 sub 資訊（用於 UI 顯示）
+                const cellMode = this.getCellMode(beatIdx);
+                const cellDef = CELL_MODES[cellMode];
+                const sub = Math.floor(posInBeat / cellDef.step) + 1;
+                const bar = Math.floor(this.microIndex / microsPerBar) + 1;
+
+                // Progressive Training Mode: 檢查是否需要提速
+                if (this.progressiveMode && isDownbeat && bar > this._lastProgressiveBar) {
+                  const barsSinceLastStep = bar - this._lastProgressiveBar;
+                  if (barsSinceLastStep >= this.progressiveBarsPerStep) {
+                    const newBpm = Math.min(
+                      this.bpm + this.progressiveBpmIncrement,
+                      this.progressiveMaxBpm
+                    );
+                    if (newBpm > this.bpm) {
+                      this.bpm = newBpm;
+                      this._shouldFlashBpm = true; // 觸發視覺閃爍
+                      this._lastProgressiveBar = bar;
+                    }
+                  }
+                }
+
+                // 計算當前重音級別（用於 UI 顏色回饋）
+                let currentAccentLevel = 0;
+                if (!shouldGhost) {
+                  const preset = GROOVE_PRESETS[this.grooveName] || GROOVE_PRESETS.standard;
+                  const pattern = preset.pattern4 || GROOVE_PRESETS.standard.pattern4;
+                  
+                  if (isBeatBoundary) {
+                    // 拍點（on-beat）：使用 pattern 的重音級別
+                    if (this.grooveName === "boombap") {
+                      // Boom Bap 特殊處理：Quarter Notes
+                      // Beat 2 & 4: Heavy accents (level 2, simulating hard snare)
+                      // Beat 1: Strong but slightly less than snare (level 1.8)
+                      // Beat 3: Medium accent (level 1)
+                      if (beatIdx === 0) {
+                        currentAccentLevel = 1.8; // Beat 1: Strong but slightly less
+                      } else if (beatIdx === 1 || beatIdx === 3) {
+                        currentAccentLevel = 2; // Beat 2 & 4: Heavy accents
+                      } else {
+                        currentAccentLevel = 1; // Beat 3: Medium accent
+                      }
+                    } else if (this.grooveName === "reggae") {
+                      // Reggae 特殊處理：重音在 off-beat，所以 on-beat 降低重音
+                      const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                      if (beatAccent >= 2) {
+                        currentAccentLevel = 1; // 第 2、4 拍的 on-beat 降為中等重音（重音在 off-beat）
+                      } else {
+                        currentAccentLevel = beatAccent; // 其他拍保持原樣
+                      }
+                    } else {
+                      currentAccentLevel = pattern[beatIdx % pattern.length] ?? 1;
+                    }
+                  } else {
+                    // 細分點（off-beat 或其他細分）
+                    const cellMode = this.getCellMode(beatIdx);
+                    
+                    if (this.grooveName === "boombap") {
+                      // Boom Bap 特殊處理
+                      if (cellMode === "eighth") {
+                        // Eighth Notes: Off-beat ('&') should have velocity ~80% (loud hi-hats)
+                        if (posInBeat === 24) {
+                          currentAccentLevel = 1.6; // Off-beat: 80% velocity
+                        } else {
+                          currentAccentLevel = 0; // On-beat: 已在 isBeatBoundary 處理
+                        }
+                      } else if (cellMode === "sixteenth") {
+                        // Sixteenth Notes: 'Funky Drummer' feel
+                        // 'e' and 'a' subdivisions very quiet (Velocity 30-40) as ghost notes
+                        if (this._isSixteenthGhostNote(posInBeat)) {
+                          currentAccentLevel = 0.35; // Ghost notes
+                        } else if (posInBeat === 24) {
+                          currentAccentLevel = 1; // Off-beat: Medium volume
+                        } else {
+                          currentAccentLevel = 0; // On-beat: 已在 isBeatBoundary 處理
+                        }
+                      } else {
+                        // Quarter Notes: 已在 isBeatBoundary 處理
+                        currentAccentLevel = 0;
+                      }
+                    } else if (this.grooveName === "reggae") {
+                      // Reggae 特殊處理：第 2、4 拍的反拍（off-beat）有強重音
+                      // 模擬雷鬼/爵士的後半拍強調感
+                      // 支持所有細分：1/8, 1/16, triplet
+                      if (this._isReggaeOffbeat(cellMode, posInBeat)) {
+                        const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                        if (beatAccent >= 2) {
+                          currentAccentLevel = 2; // 第 2、4 拍的 off-beat 是強重音
+                        } else {
+                          currentAccentLevel = 0; // 其他拍的 off-beat 無重音
+                        }
+                      } else {
+                        currentAccentLevel = 0; // 其他細分點無重音
+                      }
+                    } else {
+                      // 其他風格：細分點通常無重音
+                      currentAccentLevel = 0;
+                    }
+                  }
+                }
+
+                this._lastScheduledInfo = {
+                  bar,
+                  beat: beatIdx + 1,
+                  sub,
+                  isDownbeat,
+                  isBeatBoundary,
+                  cellMode,
+                  isGhost: shouldGhost,
+                  accentLevel: currentAccentLevel,
+                };
+
+                if (onScheduledTick) {
+                  onScheduledTick({
+                    time: this.nextTickTime,
+                    microIndex: this.microIndex,
+                    microInBar,
+                    beatIdx,
+                    posInBeat,
+                    bar,
+                    beat: beatIdx + 1,
+                    sub,
+                    isDownbeat,
+                    isBeatBoundary,
+                    cellMode,
+                  });
+                }
+              }
+
+              // 無論是否有打點，時間軸都要繼續前進
+              this.nextTickTime += microInterval;
+              this.microIndex += 1;
+            }
+          }
+
+          start(onScheduledTick) {
+            if (!this.audio) throw new Error("Audio not ready");
+            if (this.isPlaying) return;
+
+            // Re-sync to current audio time to avoid drift after pause/background
+            const audioNow = this.audio.currentTime;
+            const warmup = 0.06;
+            this.nextTickTime = audioNow + warmup;
+            this.lastTickTime = audioNow;
+
+            // Align microIndex to start at bar boundary for clearer training
+            this.microIndex = 0;
+
+            // Progressive Mode: 重置狀態
+            if (this.progressiveMode) {
+              this.initialBpm = this.bpm;
+              this._lastProgressiveBar = 0;
+            }
+
+            // 开始记录训练会话
+            this._startTrainingSession();
+
+            this.isPlaying = true;
+            const loop = () => {
+              this._schedulerStep(onScheduledTick);
+              if (!this.isPlaying) return;
+              this._timer = window.setTimeout(loop, this.schedulerIntervalMs);
+            };
+            loop();
+          }
+
+          stop() {
+            if (!this.isPlaying) return;
+            this.isPlaying = false;
+            if (this._timer) {
+              window.clearTimeout(this._timer);
+              this._timer = null;
+            }
+            
+            // 结束并保存训练会话
+            this._endTrainingSession();
+          }
+          
+          _startTrainingSession() {
+            this._sessionStartTime = Date.now();
+            this._currentSession = {
+              startTime: new Date().toISOString(),
+              bpm: this.bpm,
+              initialBpm: this.bpm,
+              groove: this.grooveName,
+              division: this.division,
+              cellModes: [...this.cellModes],
+              ghostMode: this.ghostMode,
+              progressiveMode: this.progressiveMode,
+              swing: this.swing,
+            };
+          }
+          
+          _endTrainingSession() {
+            if (!this._currentSession || !this._sessionStartTime) return;
+            
+            const duration = Math.floor((Date.now() - this._sessionStartTime) / 1000);
+            if (duration < 1) {
+              // 少于1秒不保存
+              this._currentSession = null;
+              this._sessionStartTime = null;
+              return;
+            }
+            
+            const record = {
+              ...this._currentSession,
+              endTime: new Date().toISOString(),
+              duration: duration,
+              finalBpm: this.bpm,
+            };
+            
+            // 保存到日历系统
+            TrainingCalendar.saveSession(record);
+            
+            // 清理会话状态
+            this._currentSession = null;
+            this._sessionStartTime = null;
+          }
+        }
+
+        // ===== Settings Persistence =====
+        const SETTINGS_KEY = "rapMetronomeSettings";
+        const TRAINING_CALENDAR_KEY = "rapMetronomeTrainingCalendar";
+        const DAILY_GOAL_KEY = "rapMetronomeDailyGoal";
+        
+        // ===== Daily Goal System =====
+        class DailyGoal {
+          static GOAL_MINUTES = 20; // 固定20分钟
+          
+          static getGoal() {
+            return this.GOAL_MINUTES;
+          }
+          
+          static getTodayProgress() {
+            const todayData = TrainingCalendar.getDateData(new Date());
+            if (!todayData || !todayData.totalDuration) {
+              return { duration: 0, goal: this.GOAL_MINUTES * 60 };
+            }
+            return {
+              duration: todayData.totalDuration, // 秒
+              goal: this.GOAL_MINUTES * 60, // 转换为秒
+            };
+          }
+          
+          static getProgressPercent() {
+            const { duration, goal } = this.getTodayProgress();
+            if (goal === 0) return 0;
+            return Math.min(100, Math.round((duration / goal) * 100));
+          }
+          
+          // 检查指定日期是否达成目标（20分钟 = 1200秒）
+          static isGoalAchieved(date) {
+            const dayData = TrainingCalendar.getDateData(date);
+            if (!dayData || !dayData.totalDuration) return false;
+            return dayData.totalDuration >= 1200; // 20分钟 = 1200秒
+          }
+        }
+        
+        // ===== Training Calendar System =====
+        class TrainingCalendar {
+          // 获取日期键（YYYY-MM-DD格式）
+          static getDateKey(date = new Date()) {
+            const d = date instanceof Date ? date : new Date(date);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+          }
+          
+          // 保存训练会话
+          static saveSession(session) {
+            try {
+              const dateKey = this.getDateKey();
+              const calendar = this.loadCalendar();
+              
+              if (!calendar[dateKey]) {
+                calendar[dateKey] = {
+                  date: dateKey,
+                  sessions: [],
+                  totalDuration: 0,
+                  totalSessions: 0,
+                };
+              }
+              
+              calendar[dateKey].sessions.push(session);
+              calendar[dateKey].totalDuration += session.duration || 0;
+              calendar[dateKey].totalSessions = calendar[dateKey].sessions.length;
+              
+              // 只保留最近365天的数据
+              const cutoffDate = new Date();
+              cutoffDate.setDate(cutoffDate.getDate() - 365);
+              const cutoffKey = this.getDateKey(cutoffDate);
+              
+              Object.keys(calendar).forEach(key => {
+                if (key < cutoffKey) {
+                  delete calendar[key];
+                }
+              });
+              
+              localStorage.setItem(TRAINING_CALENDAR_KEY, JSON.stringify(calendar));
+              
+              // 触发更新事件
+              window.dispatchEvent(new CustomEvent('trainingCalendarUpdated', { detail: { dateKey } }));
+              
+              return true;
+            } catch (e) {
+              console.warn("Failed to save training session:", e);
+              return false;
+            }
+          }
+          
+          // 加载日历数据
+          static loadCalendar() {
+            try {
+              const saved = localStorage.getItem(TRAINING_CALENDAR_KEY);
+              return saved ? JSON.parse(saved) : {};
+            } catch (e) {
+              console.warn("Failed to load training calendar:", e);
+              return {};
+            }
+          }
+          
+          // 获取特定日期的数据
+          static getDateData(date) {
+            const calendar = this.loadCalendar();
+            const dateKey = date instanceof Date ? this.getDateKey(date) : date;
+            return calendar[dateKey] || null;
+          }
+          
+          // 获取月份的所有数据
+          static getMonthData(year, month) {
+            const calendar = this.loadCalendar();
+            const monthKey = `${year}-${String(month).padStart(2, '0')}`;
+            const result = {};
+            
+            Object.keys(calendar).forEach(dateKey => {
+              if (dateKey.startsWith(monthKey)) {
+                result[dateKey] = calendar[dateKey];
+              }
+            });
+            
+            return result;
+          }
+          
+          // 获取统计数据
+          static getStats() {
+            const calendar = this.loadCalendar();
+            let totalDuration = 0;
+            let daysWithTraining = 0;
+            
+            Object.values(calendar).forEach(dayData => {
+              totalDuration += dayData.totalDuration || 0;
+              if (dayData.totalSessions > 0) {
+                daysWithTraining++;
+              }
+            });
+            
+            return {
+              totalDuration,
+              daysWithTraining,
+            };
+          }
+          
+          // 获取BPM范围（每5 BPM为区间）
+          static getBpmRange(bpm) {
+            // 向下取整到5的倍数
+            const rounded = Math.floor(bpm / 5) * 5;
+            const start = Math.max(40, rounded);
+            const end = Math.min(240, start + 5);
+            return { start, end };
+          }
+          
+          // 获取按每5 BPM区间的练习时长统计
+          static getBpmRangeStats() {
+            const calendar = this.loadCalendar();
+            const bpmRanges = {};
+            
+            // 初始化所有可能的BPM区间（40-240，每5为一个区间）
+            for (let bpm = 40; bpm < 240; bpm += 5) {
+              const range = this.getBpmRange(bpm);
+              const rangeKey = `${range.start}-${range.end}`;
+              if (!bpmRanges[rangeKey]) {
+                bpmRanges[rangeKey] = {
+                  rangeKey: rangeKey,
+                  start: range.start,
+                  end: range.end,
+                  duration: 0,
+                };
+              }
+            }
+            
+            // 统计每个BPM区间的练习时长
+            Object.values(calendar).forEach(dayData => {
+              if (dayData.sessions && dayData.sessions.length > 0) {
+                dayData.sessions.forEach(session => {
+                  // 计算平均BPM（如果是Progressive Mode）
+                  const avgBpm = session.progressiveMode && session.finalBpm 
+                    ? Math.round((session.bpm + session.finalBpm) / 2)
+                    : session.bpm;
+                  
+                  const range = this.getBpmRange(avgBpm);
+                  const rangeKey = `${range.start}-${range.end}`;
+                  
+                  if (bpmRanges[rangeKey]) {
+                    bpmRanges[rangeKey].duration += session.duration || 0;
+                  }
+                });
+              }
+            });
+            
+            // 只返回有数据的区间，按BPM排序
+            return Object.values(bpmRanges)
+              .filter(range => range.duration > 0)
+              .sort((a, b) => a.start - b.start);
+          }
+          
+          // 获取日期按BPM范围分组的数据
+          static getDateDataByBpmRange(date) {
+            const dayData = this.getDateData(date);
+            if (!dayData || !dayData.sessions || dayData.sessions.length === 0) {
+              return {};
+            }
+            
+            const ranges = {};
+            dayData.sessions.forEach(session => {
+              // 计算平均BPM（如果是Progressive Mode）
+              const avgBpm = session.progressiveMode && session.finalBpm 
+                ? Math.round((session.bpm + session.finalBpm) / 2)
+                : session.bpm;
+              
+              const range = this.getBpmRange(avgBpm);
+              const rangeKey = `${range.start}-${range.end}`;
+              
+              if (!ranges[rangeKey]) {
+                ranges[rangeKey] = {
+                  rangeKey: rangeKey,
+                  start: range.start,
+                  end: range.end,
+                  duration: 0,
+                  sessions: 0,
+                };
+              }
+              
+              ranges[rangeKey].duration += session.duration || 0;
+              ranges[rangeKey].sessions += 1;
+            });
+            
+            return ranges;
+          }
+          
+          // 获取按风格分组的BPM范围统计（每5 BPM为区间）
+          static getBpmRangeStatsByGroove() {
+            const calendar = this.loadCalendar();
+            const statsByGroove = {};
+            
+            // 遍历所有训练会话
+            Object.values(calendar).forEach(dayData => {
+              if (dayData.sessions && dayData.sessions.length > 0) {
+                dayData.sessions.forEach(session => {
+                  const groove = session.groove || 'standard';
+                  
+                  // 初始化风格对象
+                  if (!statsByGroove[groove]) {
+                    statsByGroove[groove] = {};
+                  }
+                  
+                  // 计算平均BPM（如果是Progressive Mode）
+                  const avgBpm = session.progressiveMode && session.finalBpm 
+                    ? Math.round((session.bpm + session.finalBpm) / 2)
+                    : session.bpm;
+                  
+                  const range = this.getBpmRange(avgBpm);
+                  const rangeKey = `${range.start}-${range.end}`;
+                  
+                  // 初始化BPM区间
+                  if (!statsByGroove[groove][rangeKey]) {
+                    statsByGroove[groove][rangeKey] = {
+                      rangeKey: rangeKey,
+                      start: range.start,
+                      end: range.end,
+                      duration: 0,
+                    };
+                  }
+                  
+                  statsByGroove[groove][rangeKey].duration += session.duration || 0;
+                });
+              }
+            });
+            
+            // 转换格式：按风格分组，每个风格包含BPM区间数组
+            const result = {};
+            Object.keys(statsByGroove).forEach(groove => {
+              result[groove] = Object.values(statsByGroove[groove])
+                .filter(range => range.duration > 0)
+                .sort((a, b) => a.start - b.start);
+            });
+            
+            return result;
+          }
+        }
+        
+        function saveSettings() {
+          try {
+            const settings = {
+              bpm: engine.bpm,
+              grooveName: engine.grooveName,
+              swing: engine.swing,
+              ghostMode: engine.ghostMode,
+              progressiveMode: engine.progressiveMode,
+              cellModes: [...engine.cellModes],
+              division: engine.division,
+              version: "0.8.5",
+            };
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+          } catch (e) {
+            console.warn("Failed to save settings:", e);
+          }
+        }
+        
+        function loadSettings() {
+          try {
+            const saved = localStorage.getItem(SETTINGS_KEY);
+            if (!saved) return null;
+            
+            const settings = JSON.parse(saved);
+            // 驗證設定有效性
+            if (settings.bpm && settings.bpm >= 40 && settings.bpm <= 240) {
+              engine.bpm = settings.bpm;
+            }
+            if (settings.grooveName && GROOVE_PRESETS[settings.grooveName]) {
+              engine.grooveName = settings.grooveName;
+            }
+            if (settings.swing !== undefined && settings.swing >= 0 && settings.swing <= 100) {
+              engine.swing = settings.swing;
+            }
+            if (settings.ghostMode !== undefined) {
+              engine.ghostMode = settings.ghostMode;
+            }
+            if (settings.progressiveMode !== undefined) {
+              engine.progressiveMode = settings.progressiveMode;
+              if (settings.progressiveMode) {
+                engine.initialBpm = settings.bpm || engine.bpm;
+              }
+            }
+            if (settings.cellModes && Array.isArray(settings.cellModes) && settings.cellModes.length === 4) {
+              // 驗證每個cell mode是否有效
+              const validModes = settings.cellModes.filter(m => CELL_MODE_ORDER.includes(m));
+              if (validModes.length === 4) {
+                engine.cellModes = validModes;
+              }
+            }
+            if (settings.division && [1, 2, 3, 4].includes(settings.division)) {
+              engine.division = settings.division;
+            }
+            
+            return settings;
+          } catch (e) {
+            console.warn("Failed to load settings:", e);
+            return null;
+          }
+        }
+
+        // ===== App State =====
+        const engine = new MetronomeEngine();
+        const state = {
+          wasPlayingBeforeHide: false,
+          ui: {
+            hiTickIndex: -1,
+            lastScheduledTick: null,
+          },
+        };
+
+        // ===== DOM =====
+        const bpmValue = document.getElementById("bpmValue");
+        const btnPlay = document.getElementById("btnPlay");
+        const playLabel = document.getElementById("playLabel");
+        const playSub = document.getElementById("playSub");
+        const bpmSlider = document.getElementById("bpmSlider");
+        const swingSlider = document.getElementById("swingSlider");
+        const swingValue = document.getElementById("swingValue");
+        const segBtns = Array.from(document.querySelectorAll(".segBtn"));
+        const segNote = document.getElementById("segNote");
+        const grooveBtns = Array.from(document.querySelectorAll(".grooveBtn"));
+        const ghostModeToggle = document.getElementById("ghostModeToggle");
+        const progressiveModeToggle = document.getElementById("progressiveModeToggle");
+        const statePill = document.getElementById("statePill");
+        const stateText = document.getElementById("stateText");
+        const timelineMeta = document.getElementById("timelineMeta");
+        const bpmDrag = document.getElementById("bpmDrag");
+        const tapTempoBtn = document.getElementById("tapTempoBtn");
+        const calendarBtn = document.getElementById("calendarBtn");
+        const calendarModal = document.getElementById("calendarModal");
+        const calendarCloseBtn = document.getElementById("calendarCloseBtn");
+        const calendarPrevMonth = document.getElementById("calendarPrevMonth");
+        const calendarNextMonth = document.getElementById("calendarNextMonth");
+        const calendarMonthYear = document.getElementById("calendarMonthYear");
+        const calendarGrid = document.getElementById("calendarGrid");
+        const calendarDayDetail = document.getElementById("calendarDayDetail");
+        const calendarStats = document.getElementById("calendarStats");
+        const dailyGoalCard = document.getElementById("dailyGoalCard");
+        const dailyGoalProgressText = document.getElementById("dailyGoalProgressText");
+        const dailyGoalProgressPercent = document.getElementById("dailyGoalProgressPercent");
+        const dailyGoalProgressFill = document.getElementById("dailyGoalProgressFill");
+        const calendarDailyGoal = document.getElementById("calendarDailyGoal");
+        const calendarDailyGoalProgressText = document.getElementById("calendarDailyGoalProgressText");
+        const calendarDailyGoalProgressPercent = document.getElementById("calendarDailyGoalProgressPercent");
+        const calendarDailyGoalProgressFill = document.getElementById("calendarDailyGoalProgressFill");
+
+        const canvas = document.getElementById("timeline");
+        const ctx = canvas ? canvas.getContext("2d") : null;
+
+        // ===== Cell Editor: Timeline click handler =====
+        if (canvas) {
+          canvas.addEventListener("click", (e) => {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const dpr = window.devicePixelRatio || 1;
+          const canvasX = (x / rect.width) * canvas.width;
+          const canvasW = canvas.width;
+          const padX = Math.floor(canvasW * 0.05);
+          const innerW = canvasW - padX * 2;
+          
+          // 計算點擊的是哪一拍
+          const beatWidth = innerW / engine.beatsPerBar;
+          const clickedBeat = Math.floor((canvasX - padX) / beatWidth);
+          
+          if (clickedBeat >= 0 && clickedBeat < engine.beatsPerBar) {
+            const newMode = engine.cycleCellMode(clickedBeat);
+            const cellDef = CELL_MODES[newMode];
+            
+            // 更新按鈕狀態（檢查所有 cell 是否都是同一模式）
+            updateSegButtons();
+            
+            saveSettings();
+            showToast(`第 ${clickedBeat + 1} 拍：${cellDef.label}`, 1000);
+          }
+          }, { passive: true });
+        }
+
+        // ===== UI Helpers =====
+        function setStatePill(kind, text) {
+          statePill.dataset.state = kind;
+          stateText.textContent = text;
+        }
+
+        function setBpmUI(v, flash = false) {
+          bpmValue.textContent = String(v);
+          if (bpmSlider && Number(bpmSlider.value) !== v) {
+            bpmSlider.value = String(v);
+          }
+        }
+
+        function updateSegButtons(activeDiv) {
+          // 如果提供了 activeDiv，直接使用它（用於手動點擊或 Groove 切換）
+          if (activeDiv !== undefined && activeDiv !== null) {
+            segBtns.forEach((b) => {
+              const div = Number(b.dataset.division);
+              b.setAttribute("aria-pressed", div === activeDiv ? "true" : "false");
+            });
+            return;
+          }
+          
+          // 否則檢查所有 cell 是否都是同一模式
+          const firstMode = engine.getCellMode(0);
+          let allSame = true;
+          for (let i = 1; i < engine.beatsPerBar; i++) {
+            if (engine.getCellMode(i) !== firstMode) {
+              allSame = false;
+              break;
+            }
+          }
+          
+          // 如果全部相同，高亮對應的按鈕
+          if (allSame) {
+            const modeToDiv = {
+              quarter: 1,
+              eighth: 2,
+              sixteenth: 4,
+              triplet: 3,
+            };
+            const expectedDiv = modeToDiv[firstMode];
+            if (expectedDiv) {
+              segBtns.forEach((b) => {
+                const div = Number(b.dataset.division);
+                b.setAttribute("aria-pressed", div === expectedDiv ? "true" : "false");
+              });
+            } else {
+              // 如果模式不匹配，全部取消高亮
+              segBtns.forEach((b) => {
+                b.setAttribute("aria-pressed", "false");
+              });
+            }
+          } else {
+            // 如果混搭，全部取消高亮
+            segBtns.forEach((b) => {
+              b.setAttribute("aria-pressed", "false");
+            });
+          }
+        }
+
+        function updateGrooveButtons(activeName) {
+          grooveBtns.forEach((b) => {
+            const g = b.dataset.groove;
+            b.setAttribute("aria-pressed", g === activeName ? "true" : "false");
+          });
+        }
+
+        function setSegNote(msg = "") {
+          segNote.textContent = msg;
+        }
+
+        function updateTimelineMeta() {
+          const groove = GROOVE_PRESETS[engine.grooveName] || GROOVE_PRESETS.standard;
+          const info = engine._lastScheduledInfo;
+          const cellLabel = info.cellMode ? CELL_MODES[info.cellMode]?.label || "" : "";
+          
+          let metaText = `4/4 · ${cellLabel || formatDivision(engine.division)} · ${groove.label} · Bar ${info.bar}`;
+          
+          // 如果正在播放，添加 Beat 和 Downbeat 信息（不显示 Sub）
+          if (engine.audio && engine.isPlaying) {
+            const { bar, beat, isDownbeat, isGhost } = engine._lastScheduledInfo;
+            metaText += ` · Beat ${beat}${isDownbeat ? " · Downbeat" : ""}`;
+            if (engine.ghostMode && (isGhost || engine._ghostState.isGhosting)) {
+              metaText += " · 👻 Ghost";
+            }
+            if (engine.progressiveMode) {
+              metaText += " · ⬆ Progressive";
+            }
+          }
+          
+          timelineMeta.textContent = metaText;
+        }
+
+        function dprResizeCanvas() {
+          const dpr = window.devicePixelRatio || 1;
+          const rect = canvas.getBoundingClientRect();
+          const w = Math.max(1, Math.floor(rect.width * dpr));
+          const h = Math.max(1, Math.floor(rect.height * dpr));
+          if (canvas.width !== w || canvas.height !== h) {
+            canvas.width = w;
+            canvas.height = h;
+          }
+        }
+
+        // ===== Timeline Rendering =====
+        function drawTimeline() {
+          if (!canvas || !ctx) return;
+          dprResizeCanvas();
+          const w = canvas.width;
+          const h = canvas.height;
+          ctx.clearRect(0, 0, w, h);
+
+          // background
+          ctx.fillStyle = "rgba(255,255,255,0.03)";
+          ctx.fillRect(0, 0, w, h);
+
+          const padX = Math.floor(w * 0.05);
+          const padY = Math.floor(h * 0.18);
+          const innerW = w - padX * 2;
+          const midY = Math.floor(h * 0.58);
+
+          // subtle baseline
+          ctx.strokeStyle = "rgba(255,255,255,0.10)";
+          ctx.lineWidth = Math.max(1, Math.floor((window.devicePixelRatio || 1)));
+          ctx.beginPath();
+          ctx.moveTo(padX, midY);
+          ctx.lineTo(padX + innerW, midY);
+          ctx.stroke();
+
+          // 繪製每一拍的 cell blocks（根據 cellModes）
+          const beatWidth = innerW / engine.beatsPerBar;
+          for (let beatIdx = 0; beatIdx < engine.beatsPerBar; beatIdx++) {
+            const beatStartX = padX + beatWidth * beatIdx;
+            const cellMode = engine.getCellMode(beatIdx);
+            const cellDef = CELL_MODES[cellMode];
+            const isDownbeat = beatIdx === 0;
+
+            // 計算這個 cell 應該有多少個 block
+            const blocksPerBeat = cellDef.div;
+            const blockWidth = beatWidth / blocksPerBeat * 0.85; // 稍微留空隙
+            const blockSpacing = beatWidth / blocksPerBeat;
+
+            // 獲取當前風格的重音模式
+            const preset = GROOVE_PRESETS[engine.grooveName] || GROOVE_PRESETS.standard;
+            const pattern = preset.pattern4 || GROOVE_PRESETS.standard.pattern4;
+            
+            for (let blockIdx = 0; blockIdx < blocksPerBeat; blockIdx++) {
+              const centerX = beatStartX + blockSpacing * (blockIdx + 0.5);
+              const x = centerX - blockWidth / 2;
+
+              // 計算當前 block 的重音級別（與聲音播放邏輯一致）
+              let accentLevel = 0;
+              const isBeatBoundary = blockIdx === 0;
+              
+              if (isBeatBoundary) {
+                // 拍點（on-beat）：使用 pattern 的重音級別
+                if (engine.grooveName === "reggae") {
+                  // Reggae 特殊處理：重音在 off-beat，所以 on-beat 降低重音
+                  const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                  if (beatAccent >= 2) {
+                    accentLevel = 1; // 第 2、4 拍的 on-beat 降為中等重音（重音在 off-beat）
+                  } else {
+                    accentLevel = beatAccent; // 其他拍保持原樣
+                  }
+                } else {
+                  accentLevel = pattern[beatIdx % pattern.length] ?? 1;
+                }
+              } else {
+                // 細分點（off-beat 或其他細分）
+                if (engine.grooveName === "reggae") {
+                  // Reggae 特殊處理：第 2、4 拍的反拍（off-beat）有強重音
+                  // 支持所有細分：1/8, 1/16, triplet
+                  // 計算 posInBeat（在 1/48 網格中的位置）
+                  const posInBeat = blockIdx * (48 / blocksPerBeat);
+                  
+                  if (engine._isReggaeOffbeat(cellMode, posInBeat)) {
+                    const beatAccent = pattern[beatIdx % pattern.length] ?? 1;
+                    if (beatAccent >= 2) {
+                      accentLevel = 2; // 第 2、4 拍的 off-beat 是強重音（後半拍強調）
+                    } else {
+                      accentLevel = 0; // 其他拍的 off-beat 無重音
+                    }
+                  } else {
+                    accentLevel = 0; // 其他細分點無重音
+                  }
+                } else {
+                  // 其他風格：細分點通常無重音
+                  accentLevel = 0;
+                }
+              }
+
+              // 根據重音級別決定 block 高度和顏色（與聲音播放一致）
+              let blockHeight, fillColor;
+              if (accentLevel >= 2) {
+                // 強重音（level 2）：冰藍色
+                blockHeight = h * 0.35; // 從 0.42 減小到 0.35，避免遮擋文字
+                fillColor = "rgba(0,229,255,0.95)";
+              } else if (accentLevel === 1) {
+                // 中等重音（level 1）：紫色
+                blockHeight = h * 0.25; // 從 0.30 減小到 0.25
+                fillColor = "rgba(255,255,255,0.80)";
+              } else {
+                // 無重音（level 0）：淡白色
+                blockHeight = h * 0.16; // 從 0.20 減小到 0.16
+                fillColor = "rgba(255,255,255,0.26)";
+              }
+
+              const y = midY - blockHeight;
+
+              ctx.fillStyle = fillColor;
+              if (typeof ctx.roundRect === "function") {
+                ctx.beginPath();
+                ctx.roundRect(x, y, blockWidth, blockHeight * 1.15, Math.min(blockWidth, blockHeight * 0.3)); // 從 1.25 減小到 1.15
+                ctx.fill();
+              } else {
+                ctx.fillRect(x, y, blockWidth, blockHeight * 1.15); // 從 1.25 減小到 1.15
+              }
+            }
+
+            // 在每一拍上方顯示模式標籤（小字）
+            // 確保文字在頂部，不被方塊遮擋
+            ctx.fillStyle = "rgba(255,255,255,0.55)"; // 稍微提高對比度
+            ctx.font = `${Math.floor(h * 0.075)}px ui-sans-serif, system-ui, -apple-system`; // 稍微減小字體
+            ctx.textAlign = "center";
+            ctx.textBaseline = "top";
+            ctx.fillText(cellDef.label, beatStartX + beatWidth / 2, padY * 0.5); // 從 0.6 調整到 0.5，更靠近頂部
+          }
+
+          // playhead / progress
+          if (engine.audio && engine.isPlaying) {
+            const audioNow = engine.audio.currentTime;
+            const microInterval = engine._microIntervalSec();
+            const since = Math.max(0, audioNow - engine.lastTickTime);
+
+            // 從 microIndex 計算位置
+            const microsPerBar = engine.beatsPerBar * engine.microDiv;
+            const currentMicroInBar = engine.microIndex % microsPerBar;
+            const progressWithinMicro = clamp(since / microInterval, 0, 1.25);
+            const x = padX + innerW * ((currentMicroInBar + progressWithinMicro) / microsPerBar);
+
+            // Ghost Mode: 檢查是否在 ghost 狀態
+            const info = engine._lastScheduledInfo;
+            const isGhost = engine.ghostMode && (info.isGhost || engine._ghostState.isGhosting);
+
+            if (!isGhost) {
+              // 正常狀態：顯示 playhead
+              // glow
+              const grad = ctx.createRadialGradient(x, midY, 0, x, midY, innerW * 0.08);
+              grad.addColorStop(0, "rgba(0,229,255,0.22)");
+              grad.addColorStop(1, "rgba(0,229,255,0)");
+              ctx.fillStyle = grad;
+              ctx.fillRect(padX, 0, innerW, h);
+
+              ctx.strokeStyle = "rgba(0,229,255,0.95)";
+              ctx.lineWidth = 2 * (window.devicePixelRatio || 1);
+              ctx.beginPath();
+              ctx.moveTo(x, padY);
+              ctx.lineTo(x, h - padY);
+              ctx.stroke();
+            } else {
+              // Ghost 狀態：隱藏 playhead（時間軸繼續前進，但視覺靜音）
+              // 可選：顯示一個非常淡的提示
+              ctx.strokeStyle = "rgba(255,255,255,0.08)";
+              ctx.lineWidth = 1 * (window.devicePixelRatio || 1);
+              ctx.setLineDash([4, 4]);
+              ctx.beginPath();
+              ctx.moveTo(x, padY);
+              ctx.lineTo(x, h - padY);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+        }
+
+        function rafLoop() {
+          drawTimeline();
+          
+          // Progressive Mode: 檢查是否需要觸發提示
+          if (engine._shouldFlashBpm) {
+            setBpmUI(engine.bpm);
+            engine._shouldFlashBpm = false;
+            showToast(`BPM 提升至 ${engine.bpm}`, 1200);
+          }
+          
+          updateTimelineMeta();
+          requestAnimationFrame(rafLoop);
+        }
+
+        // ===== Scheduler callback (optional; reserved for future UI sync) =====
+        function onScheduledTick(evt) {
+          state.ui.lastScheduledTick = evt;
+        }
+
+        // ===== Controls =====
+        function refreshPlayUI() {
+          if (engine.isPlaying) {
+            btnPlay.classList.add("playing");
+            playLabel.textContent = "STOP";
+            playSub.textContent = "";
+            setStatePill("playing", "播放中");
+          } else {
+            btnPlay.classList.remove("playing");
+            playLabel.textContent = "START";
+            playSub.textContent = engine.audio && engine.audio.state === "running" ? "" : "點擊以解鎖音訊";
+            setStatePill("stopped", "STANDBY");
+          }
+        }
+
+        async function togglePlay() {
+          try {
+            await engine.ensureAudioUnlocked();
+          } catch (e) {
+            showToast("音訊初始化失敗（請檢查靜音/權限）");
+            return;
+          }
+
+          if (engine.isPlaying) {
+            engine.stop();
+            refreshPlayUI();
+            return;
+          }
+
+          engine.start(onScheduledTick);
+          refreshPlayUI();
+          setSegNote("");
+        }
+
+        btnPlay.addEventListener("click", togglePlay, { passive: true });
+
+        // BPM drag (horizontal)
+        (() => {
+          let dragging = false;
+          let startX = 0;
+          let startBpm = engine.bpm;
+          let lastApplied = engine.bpm;
+
+          const onDown = (e) => {
+            // 如果点击的是按钮，不启动拖拽
+            if (e.target.closest('.bpmAdjustBtn')) {
+              return;
+            }
+            dragging = true;
+            bpmDrag.setPointerCapture?.(e.pointerId);
+            startX = e.clientX;
+            startBpm = engine.bpm;
+            lastApplied = engine.bpm;
+          };
+          const onMove = (e) => {
+            if (!dragging) return;
+            const dx = e.clientX - startX;
+            // 16px per BPM, accelerate slightly
+            const next = clamp(Math.round(startBpm + dx / 16), 40, 240);
+            if (next !== lastApplied) {
+              engine.setBpm(next);
+              setBpmUI(engine.bpm);
+              lastApplied = next;
+              saveSettings();
+            }
+          };
+          const onUp = () => {
+            dragging = false;
+            saveSettings();
+          };
+
+          bpmDrag.addEventListener("pointerdown", onDown);
+          window.addEventListener("pointermove", onMove, { passive: true });
+          window.addEventListener("pointerup", onUp, { passive: true });
+          window.addEventListener("pointercancel", onUp, { passive: true });
+        })();
+
+        // BPM slider
+        if (bpmSlider) {
+          bpmSlider.addEventListener("input", (e) => {
+            const v = Number(e.target.value || engine.bpm);
+            engine.setBpm(v);
+            setBpmUI(engine.bpm);
+            saveSettings();
+          }, { passive: true });
+        }
+
+        // BPM +/- buttons
+        const bpmIncreaseBtn = document.getElementById("bpmIncreaseBtn");
+        const bpmDecreaseBtn = document.getElementById("bpmDecreaseBtn");
+        
+        function adjustBpm(delta) {
+          const newBpm = clamp(engine.bpm + delta, 40, 240);
+          engine.setBpm(newBpm);
+          setBpmUI(engine.bpm);
+          saveSettings();
+        }
+        
+        if (bpmIncreaseBtn) {
+          bpmIncreaseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            adjustBpm(1);
+          }, { passive: false });
+        }
+        
+        if (bpmDecreaseBtn) {
+          bpmDecreaseBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            adjustBpm(-1);
+          }, { passive: false });
+        }
+
+        // Swing slider
+        function setSwingUI(v) {
+          if (swingValue) {
+            swingValue.textContent = `${v}%`;
+          }
+        }
+        if (swingSlider) {
+          swingSlider.addEventListener("input", (e) => {
+            const v = Number(e.target.value || 0);
+            engine.setSwing(v);
+            setSwingUI(engine.swing);
+            saveSettings();
+          }, { passive: true });
+        }
+
+        // Tap Tempo (拍速检测)
+        (() => {
+          const tapTimes = [];
+          const maxTaps = 8; // 最多保留 8 次点击
+          const resetTimeout = 2000; // 2 秒无点击则重置
+          let resetTimer = null;
+
+          function calculateBPM() {
+            if (tapTimes.length < 2) return null;
+            
+            // 计算所有间隔的平均值
+            const intervals = [];
+            for (let i = 1; i < tapTimes.length; i++) {
+              intervals.push(tapTimes[i] - tapTimes[i - 1]);
+            }
+            
+            const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
+            const bpm = Math.round(60000 / avgInterval); // 转换为 BPM
+            
+            // 限制在有效范围内
+            return clamp(bpm, 40, 240);
+          }
+
+          function resetTaps() {
+            tapTimes.length = 0;
+            if (resetTimer) {
+              clearTimeout(resetTimer);
+              resetTimer = null;
+            }
+          }
+
+          function handleTap() {
+            const now = Date.now();
+            
+            // 如果距离上次点击超过重置时间，清空记录
+            if (tapTimes.length > 0 && now - tapTimes[tapTimes.length - 1] > resetTimeout) {
+              resetTaps();
+            }
+            
+            // 添加当前点击时间
+            tapTimes.push(now);
+            
+            // 限制记录数量
+            if (tapTimes.length > maxTaps) {
+              tapTimes.shift();
+            }
+            
+            // 计算 BPM
+            const bpm = calculateBPM();
+            if (bpm !== null) {
+              engine.setBpm(bpm);
+              setBpmUI(engine.bpm);
+              saveSettings();
+              showToast(`Tap Tempo: ${bpm} BPM`, 800);
+            } else if (tapTimes.length === 1) {
+              showToast("繼續點擊以檢測 BPM", 1000);
+            }
+            
+            // 重置定时器
+            if (resetTimer) {
+              clearTimeout(resetTimer);
+            }
+            resetTimer = setTimeout(() => {
+              resetTaps();
+              showToast("Tap Tempo 已重置", 800);
+            }, resetTimeout);
+          }
+
+          if (tapTempoBtn) {
+            tapTempoBtn.addEventListener("click", handleTap, { passive: true });
+            // 支持键盘空格键（仅在未播放时且焦点在 body 上）
+            const tapTempoKeyHandler = (e) => {
+              // 只在未播放、焦点在 body、且不是输入框时触发
+              if (e.code === "Space" && 
+                  e.target === document.body && 
+                  !engine.isPlaying &&
+                  e.target.tagName !== "INPUT" &&
+                  e.target.tagName !== "TEXTAREA") {
+                e.preventDefault();
+                handleTap();
+              }
+            };
+            document.addEventListener("keydown", tapTempoKeyHandler, { passive: false });
+          }
+        })();
+
+        // Division buttons (now act as templates for all cells)
+        segBtns.forEach((b) => {
+          b.addEventListener("click", () => {
+            const div = Number(b.dataset.division);
+            
+            // Map division to cell mode
+            let mode;
+            if (div === 1) mode = "quarter";
+            else if (div === 2) mode = "eighth";
+            else if (div === 4) mode = "sixteenth";
+            else if (div === 3) mode = "triplet";
+            else mode = "quarter";
+
+            // Set all cells to this mode (template) - 先設置，再更新 UI
+            engine.setAllCellsToMode(mode);
+            engine.division = div; // Keep legacy for compatibility
+            
+            // 更新按鈕狀態（在設置 cell modes 之後）
+            updateSegButtons(div);
+            
+            saveSettings();
+            
+            setSegNote(`已套用模板：${formatDivision(div)}（整小節）`);
+            window.setTimeout(() => setSegNote(""), 1300);
+            showToast(`模板：${formatDivision(div)}`, 900);
+          }, { passive: true });
+        });
+
+        // Groove presets (Standard / Boom Bap / Trap / Reggae)
+        // 注意：切換風格時不會自動綁定音符，保持用戶當前的細分設置
+        grooveBtns.forEach((b) => {
+          b.addEventListener("click", () => {
+            const grooveName = b.dataset.groove;
+            if (!GROOVE_PRESETS[grooveName]) return;
+
+            engine.setGroove(grooveName);
+            updateGrooveButtons(grooveName);
+            saveSettings();
+            
+            const preset = GROOVE_PRESETS[grooveName];
+            showToast(`Groove：${preset.label}`, 1000);
+          }, { passive: true });
+        });
+
+
+        // Ghost Mode toggle
+        if (ghostModeToggle) {
+          ghostModeToggle.addEventListener("change", (e) => {
+            const enabled = e.target.checked;
+            engine.setGhostMode(enabled);
+            saveSettings();
+            if (enabled) {
+              showToast("Ghost Mode 已開啟：隨機空拍訓練", 1500);
+            } else {
+              showToast("Ghost Mode 已關閉", 1000);
+            }
+          }, { passive: true });
+        }
+
+        // Progressive Training Mode toggle
+        if (progressiveModeToggle) {
+          progressiveModeToggle.addEventListener("change", (e) => {
+            const enabled = e.target.checked;
+            engine.setProgressiveMode(enabled);
+            if (enabled) {
+              engine.initialBpm = engine.bpm;
+              engine._lastProgressiveBar = 0;
+              showToast("Progressive Mode 已開啟：每 4 小節自動提速 +2 BPM", 2000);
+            } else {
+              engine.bpm = engine.initialBpm;
+              setBpmUI(engine.bpm);
+              showToast("Progressive Mode 已關閉：BPM 已恢復", 1500);
+            }
+            saveSettings();
+          }, { passive: true });
+        }
+
+        // Background/foreground handling: iOS may throttle timers in background.
+        document.addEventListener("visibilitychange", () => {
+          if (document.hidden) {
+            state.wasPlayingBeforeHide = engine.isPlaying;
+            if (engine.isPlaying) {
+              engine.stop();
+              setStatePill("paused", "背景中已暫停");
+              showToast("切到背景：已暫停以避免節拍飄移");
+              refreshPlayUI();
+            }
+          } else {
+            if (state.wasPlayingBeforeHide) {
+              // If audio is already unlocked earlier, we can resume without extra gesture in most cases.
+              // Still, resume might fail if iOS suspended audio; we'll try.
+              engine.ensureAudioUnlocked()
+                .then(() => {
+                  engine.start(onScheduledTick);
+                  refreshPlayUI();
+                  showToast("回到前台：已重新同步");
+                })
+                .catch(() => {
+                  showToast("回到前台：請按 PLAY 重新開始");
+                })
+                .finally(() => {
+                  state.wasPlayingBeforeHide = false;
+                });
+            }
+          }
+        });
+
+        // Prevent double-tap zoom-ish behavior on iOS for controls (still allows pinch zoom overall)
+        document.addEventListener("gesturestart", (e) => {
+          // iOS Safari only
+          e.preventDefault();
+        }, { passive: false });
+
+        // ===== PWA: register service worker =====
+        if ("serviceWorker" in navigator) {
+          window.addEventListener("load", () => {
+            navigator.serviceWorker.register("./sw.js").catch(() => {
+              // ignore
+            });
+          });
+        }
+
+        // Load saved settings and restore UI
+        const loadedSettings = loadSettings();
+        
+        // Update UI based on loaded/current settings
+        setBpmUI(engine.bpm);
+        setSwingUI(engine.swing);
+        updateSegButtons(engine.division);
+        updateGrooveButtons(engine.grooveName);
+        
+        // Restore toggle states
+        if (ghostModeToggle) {
+          ghostModeToggle.checked = engine.ghostMode;
+        }
+        if (progressiveModeToggle) {
+          progressiveModeToggle.checked = engine.progressiveMode;
+        }
+        
+        // Update swing slider if it exists
+        if (swingSlider) {
+          swingSlider.value = engine.swing;
+        }
+        
+        refreshPlayUI();
+        
+        if (loadedSettings) {
+          showToast("已恢復上次設定", 1500);
+        }
+        
+        rafLoop();
+
+        // Tell user if not HTTPS / SW limitations (desktop dev)
+        if (location.protocol !== "https:" && location.hostname !== "localhost") {
+          // Service worker requires secure context; iOS A2HS may still work via local file, but offline caching won't.
+          showToast("提示：Service Worker 需要 HTTPS 才能離線快取", 2200);
+        }
+
+        // ===== Calendar System =====
+        let currentCalendarDate = new Date();
+        
+        function formatDuration(seconds) {
+          if (seconds < 60) return `${seconds}秒`;
+          const minutes = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+          if (secs === 0) return `${minutes}分鐘`;
+          return `${minutes}分${secs}秒`;
+        }
+        
+        function formatDurationShort(seconds) {
+          if (seconds < 60) return `${seconds}s`;
+          const minutes = Math.floor(seconds / 60);
+          return `${minutes}m`;
+        }
+        
+        function formatTime(isoString) {
+          const d = new Date(isoString);
+          return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+        }
+        
+        function updateDailyGoalProgress() {
+          const { duration, goal } = DailyGoal.getTodayProgress();
+          const percent = DailyGoal.getProgressPercent();
+          const minutes = Math.floor(duration / 60);
+          const goalMinutes = Math.floor(goal / 60);
+          
+          // 更新主界面进度条
+          if (dailyGoalProgressText) {
+            dailyGoalProgressText.textContent = `${minutes} / ${goalMinutes} 分钟`;
+          }
+          if (dailyGoalProgressPercent) {
+            dailyGoalProgressPercent.textContent = `${percent}%`;
+          }
+          if (dailyGoalProgressFill) {
+            dailyGoalProgressFill.style.width = `${percent}%`;
+            if (percent >= 100) {
+              dailyGoalProgressFill.classList.add('complete');
+            } else {
+              dailyGoalProgressFill.classList.remove('complete');
+            }
+          }
+          
+          // 更新日历中的进度条
+          if (calendarDailyGoalProgressText) {
+            calendarDailyGoalProgressText.textContent = `${minutes} / ${goalMinutes} 分钟`;
+          }
+          if (calendarDailyGoalProgressPercent) {
+            calendarDailyGoalProgressPercent.textContent = `${percent}%`;
+          }
+          if (calendarDailyGoalProgressFill) {
+            calendarDailyGoalProgressFill.style.width = `${percent}%`;
+            if (percent >= 100) {
+              calendarDailyGoalProgressFill.classList.add('complete');
+            } else {
+              calendarDailyGoalProgressFill.classList.remove('complete');
+            }
+          }
+        }
+        
+        function renderCalendarStats() {
+          const stats = TrainingCalendar.getStats();
+          const bpmStats = TrainingCalendar.getBpmRangeStats();
+          const bpmStatsByGroove = TrainingCalendar.getBpmRangeStatsByGroove();
+          
+          // 计算BPM统计的显示（最多显示前5个最长的区间）
+          const topBpmRanges = bpmStats
+            .sort((a, b) => b.duration - a.duration)
+            .slice(0, 5);
+          
+          let bpmStatsHtml = '';
+          if (topBpmRanges.length > 0) {
+            bpmStatsHtml = topBpmRanges.map(range => {
+              const hours = Math.floor(range.duration / 3600);
+              const minutes = Math.floor((range.duration % 3600) / 60);
+              let durationText = '';
+              if (hours >= 1) {
+                durationText = `${hours}小時`;
+                if (minutes > 0) durationText += `${minutes}分鐘`;
+              } else {
+                durationText = formatDuration(range.duration);
+              }
+              const colorClass = range.duration >= 14400 ? 'bpmRangeGreen' : (range.duration >= 7200 ? 'bpmRangeAmber' : '');
+              return `
+                <div class="calendarBpmStatItem ${colorClass}">
+                  <div class="calendarBpmStatLabel">${range.start}-${range.end} BPM</div>
+                  <div class="calendarBpmStatValue">${durationText}</div>
+                </div>
+              `;
+            }).join('');
+          } else {
+            bpmStatsHtml = '<div class="calendarBpmStatItem" style="grid-column: 1 / -1; color: var(--muted2); font-size: 11px;">暫無數據</div>';
+          }
+          
+          // 按风格分组的BPM统计
+          let grooveBpmStatsHtml = '';
+          const grooveOrder = ['standard', 'boombap', 'trap', 'reggae'];
+          const hasGrooveData = Object.keys(bpmStatsByGroove).length > 0;
+          
+          if (hasGrooveData) {
+            grooveOrder.forEach(groove => {
+              if (bpmStatsByGroove[groove] && bpmStatsByGroove[groove].length > 0) {
+                const grooveLabel = GROOVE_PRESETS[groove]?.label || groove;
+                const ranges = bpmStatsByGroove[groove]
+                  .sort((a, b) => b.duration - a.duration)
+                  .slice(0, 5); // 每个风格最多显示5个区间
+                
+                if (ranges.length > 0) {
+                  const rangesHtml = ranges.map(range => {
+                    const hours = Math.floor(range.duration / 3600);
+                    const minutes = Math.floor((range.duration % 3600) / 60);
+                    let durationText = '';
+                    if (hours >= 1) {
+                      durationText = `${hours}小時`;
+                      if (minutes > 0) durationText += `${minutes}分鐘`;
+                    } else {
+                      durationText = formatDuration(range.duration);
+                    }
+                    const colorClass = range.duration >= 14400 ? 'bpmRangeGreen' : (range.duration >= 7200 ? 'bpmRangeAmber' : '');
+                    return `
+                      <div class="calendarBpmStatItem ${colorClass}">
+                        <div class="calendarBpmStatLabel">${range.start}-${range.end} BPM</div>
+                        <div class="calendarBpmStatValue">${durationText}</div>
+                      </div>
+                    `;
+                  }).join('');
+                  
+                  grooveBpmStatsHtml += `
+                    <div class="calendarGrooveBpmSection">
+                      <div class="calendarGrooveBpmTitle">${grooveLabel}</div>
+                      <div class="calendarBpmStatsGrid">
+                        ${rangesHtml}
+                      </div>
+                    </div>
+                  `;
+                }
+              }
+            });
+          }
+          
+          if (!grooveBpmStatsHtml) {
+            grooveBpmStatsHtml = '<div style="color: var(--muted2); font-size: 11px; padding: 8px 0;">暫無數據</div>';
+          }
+          
+          calendarStats.innerHTML = `
+            <div class="calendarStatItem">
+              <div class="calendarStatLabel">總訓練天數</div>
+              <div class="calendarStatValue">${stats.daysWithTraining}</div>
+            </div>
+            <div class="calendarStatItem">
+              <div class="calendarStatLabel">總訓練時長</div>
+              <div class="calendarStatValue">${formatDuration(stats.totalDuration)}</div>
+            </div>
+            <div class="calendarBpmStatsSection">
+              <div class="calendarBpmStatsTitle">BPM 練習時長</div>
+              <div class="calendarBpmStatsGrid">
+                ${bpmStatsHtml}
+              </div>
+            </div>
+            <div class="calendarBpmStatsSection">
+              <div class="calendarBpmStatsTitle">各風格 BPM 練習時長</div>
+              ${grooveBpmStatsHtml}
+            </div>
+          `;
+        }
+        
+        function renderCalendar() {
+          const year = currentCalendarDate.getFullYear();
+          const month = currentCalendarDate.getMonth();
+          
+          // 更新月份年份显示
+          const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+          calendarMonthYear.textContent = `${year}年 ${monthNames[month]}`;
+          
+          // 获取月份数据
+          const monthData = TrainingCalendar.getMonthData(year, month + 1);
+          
+          // 计算日历第一天和最后一天
+          const firstDay = new Date(year, month, 1);
+          const lastDay = new Date(year, month + 1, 0);
+          const firstDayOfWeek = firstDay.getDay(); // 0 = 星期日
+          const daysInMonth = lastDay.getDate();
+          
+          // 清空日历
+          calendarGrid.innerHTML = '';
+          
+          // 添加星期标题
+          const dayHeaders = ['日', '一', '二', '三', '四', '五', '六'];
+          dayHeaders.forEach(day => {
+            const header = document.createElement('div');
+            header.className = 'calendarDayHeader';
+            header.textContent = day;
+            calendarGrid.appendChild(header);
+          });
+          
+          // 添加上个月的日期（填充第一周）
+          const prevMonth = new Date(year, month - 1, 0);
+          const daysInPrevMonth = prevMonth.getDate();
+          for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+            const day = daysInPrevMonth - i;
+            const date = new Date(year, month - 1, day);
+            const dayEl = createCalendarDay(date, true, monthData);
+            calendarGrid.appendChild(dayEl);
+          }
+          
+          // 添加当前月的日期
+          const today = new Date();
+          for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const isToday = date.toDateString() === today.toDateString();
+            const dayEl = createCalendarDay(date, false, monthData, isToday);
+            calendarGrid.appendChild(dayEl);
+          }
+          
+          // 添加下个月的日期（填充最后一周）
+          const totalCells = calendarGrid.children.length - 7; // 减去星期标题
+          const remainingCells = 42 - totalCells; // 6行 x 7列 = 42
+          for (let day = 1; day <= remainingCells; day++) {
+            const date = new Date(year, month + 1, day);
+            const dayEl = createCalendarDay(date, true, monthData);
+            calendarGrid.appendChild(dayEl);
+          }
+        }
+        
+        function createCalendarDay(date, isOtherMonth, monthData, isToday = false) {
+          const dayEl = document.createElement('div');
+          dayEl.className = 'calendarDay';
+          
+          const dateKey = TrainingCalendar.getDateKey(date);
+          const dayData = monthData[dateKey];
+          const bpmRanges = dayData ? TrainingCalendar.getDateDataByBpmRange(date) : {};
+          const hasTraining = Object.keys(bpmRanges).length > 0;
+          const goalAchieved = DailyGoal.isGoalAchieved(date);
+          
+          if (isOtherMonth) dayEl.classList.add('otherMonth');
+          if (isToday) dayEl.classList.add('today');
+          if (hasTraining) dayEl.classList.add('hasTraining');
+          if (goalAchieved) dayEl.classList.add('goalAchieved');
+          
+          // 日期数字
+          const dayNumber = document.createElement('div');
+          dayNumber.className = 'calendarDayNumber';
+          dayNumber.textContent = date.getDate();
+          dayEl.appendChild(dayNumber);
+          
+          if (hasTraining && dayData) {
+            // 显示总训练次数和总时长
+            const totalSessions = dayData.totalSessions || 0;
+            const totalDuration = dayData.totalDuration || 0;
+            
+            // 训练次数
+            const sessionsBadge = document.createElement('div');
+            sessionsBadge.className = 'calendarDaySessions';
+            sessionsBadge.textContent = `${totalSessions}次`;
+            dayEl.appendChild(sessionsBadge);
+            
+            // 总时长
+            const duration = document.createElement('div');
+            duration.className = 'calendarDayDuration';
+            duration.textContent = formatDurationShort(totalDuration);
+            dayEl.appendChild(duration);
+          }
+          
+          dayEl.addEventListener('click', () => {
+            if (hasTraining && dayData) {
+              showDayDetail(dateKey, dayData);
+            } else {
+              calendarDayDetail.style.display = 'none';
+            }
+          });
+          
+          return dayEl;
+        }
+        
+        function showDayDetail(dateKey, dayData) {
+          calendarDayDetail.style.display = 'block';
+          
+          const date = new Date(dateKey + 'T00:00:00');
+          const dateStr = `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+          
+          // 按风格分组统计
+          const byGroove = {};
+          const byBpmRange = {};
+          let totalBpm = 0;
+          let progressiveCount = 0;
+          let ghostCount = 0;
+          
+          dayData.sessions.forEach(session => {
+            // 按风格分组
+            const groove = session.groove || 'standard';
+            if (!byGroove[groove]) {
+              byGroove[groove] = {
+                groove: groove,
+                sessions: [],
+                totalDuration: 0,
+                count: 0,
+              };
+            }
+            byGroove[groove].sessions.push(session);
+            byGroove[groove].totalDuration += session.duration || 0;
+            byGroove[groove].count += 1;
+            
+            // 按BPM范围分组
+            const avgBpm = session.progressiveMode && session.finalBpm 
+              ? Math.round((session.bpm + session.finalBpm) / 2)
+              : session.bpm;
+            const range = TrainingCalendar.getBpmRange(avgBpm);
+            const rangeKey = `${range.start}-${range.end}`;
+            if (!byBpmRange[rangeKey]) {
+              byBpmRange[rangeKey] = {
+                range: rangeKey,
+                start: range.start,
+                end: range.end,
+                totalDuration: 0,
+                count: 0,
+              };
+            }
+            byBpmRange[rangeKey].totalDuration += session.duration || 0;
+            byBpmRange[rangeKey].count += 1;
+            
+            totalBpm += avgBpm;
+            if (session.progressiveMode) progressiveCount++;
+            if (session.ghostMode) ghostCount++;
+          });
+          
+          const avgBpm = Math.round(totalBpm / dayData.sessions.length);
+          
+          // 按5 BPM区间统计
+          const bpmRangeStats = Object.values(byBpmRange)
+            .sort((a, b) => a.start - b.start)
+            .filter(range => range.duration > 0);
+          
+          // 生成HTML
+          let html = `
+            <div class="calendarDayDetailTitle">${dateStr}</div>
+            <div class="calendarDayDetailSummary">
+              <div class="calendarDayDetailSummaryItem">
+                <div class="calendarDayDetailSummaryLabel">訓練次數</div>
+                <div class="calendarDayDetailSummaryValue">${dayData.totalSessions}次</div>
+              </div>
+              <div class="calendarDayDetailSummaryItem">
+                <div class="calendarDayDetailSummaryLabel">總時長</div>
+                <div class="calendarDayDetailSummaryValue">${formatDuration(dayData.totalDuration)}</div>
+              </div>
+              <div class="calendarDayDetailSummaryItem">
+                <div class="calendarDayDetailSummaryLabel">平均BPM</div>
+                <div class="calendarDayDetailSummaryValue">${avgBpm}</div>
+              </div>
+              <div class="calendarDayDetailSummaryItem">
+                <div class="calendarDayDetailSummaryLabel">风格数</div>
+                <div class="calendarDayDetailSummaryValue">${Object.keys(byGroove).length}种</div>
+              </div>
+            </div>
+          `;
+          
+          // 添加BPM区间统计
+          if (bpmRangeStats.length > 0) {
+            html += `
+              <div class="calendarBpmRangeSection">
+                <div class="calendarBpmRangeTitle">BPM 訓練統計（5 BPM區間）</div>
+                <div class="calendarBpmRangeGrid">
+                  ${bpmRangeStats.map(range => {
+                    // 判断颜色：4小时=14400秒，2小时=7200秒
+                    let colorClass = '';
+                    if (range.duration >= 14400) {
+                      colorClass = 'bpmRangeGreen'; // >= 4小时：绿色
+                    } else if (range.duration >= 7200) {
+                      colorClass = 'bpmRangeAmber'; // >= 2小时：琥珀色
+                    }
+                    
+                    return `
+                    <div class="calendarBpmRangeItem ${colorClass}">
+                      <div class="calendarBpmRangeLabel">${range.start}-${range.end}</div>
+                      <div class="calendarBpmRangeValue">${formatDuration(range.duration)}</div>
+                      <div class="calendarBpmRangeCount">${range.count}次</div>
+                    </div>
+                  `;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          }
+          
+          // 按风格分组显示
+          Object.values(byGroove).sort((a, b) => b.totalDuration - a.totalDuration).forEach(group => {
+            const grooveLabel = GROOVE_PRESETS[group.groove]?.label || group.groove;
+            html += `
+              <div class="calendarSessionGroup">
+                <div class="calendarSessionGroupTitle">${grooveLabel} <span style="color: var(--muted); font-weight: 500; font-size: 12px;">(${group.count}次 · ${formatDuration(group.totalDuration)})</span></div>
+                <div class="calendarSessionList">
+                  ${group.sessions.map((session, idx) => {
+                    const tags = [];
+                    if (session.ghostMode) tags.push('<span class="calendarSessionTag">👻 Ghost</span>');
+                    if (session.progressiveMode) tags.push(`<span class="calendarSessionTag">⬆ ${session.bpm}→${session.finalBpm}</span>`);
+                    if (session.swing > 0) tags.push(`<span class="calendarSessionTag">Swing ${session.swing}%</span>`);
+                    
+                    return `
+                      <div class="calendarSessionItem">
+                        <div class="calendarSessionHeader">
+                          <div class="calendarSessionDuration">${formatDuration(session.duration)}</div>
+                        </div>
+                        <div class="calendarSessionInfo">
+                          <div class="calendarSessionInfoItem">
+                            <span class="calendarSessionInfoLabel">BPM</span>
+                            <span class="calendarSessionInfoValue">${session.bpm}${session.progressiveMode ? ` → ${session.finalBpm}` : ''}</span>
+                          </div>
+                          <div class="calendarSessionInfoItem">
+                            <span class="calendarSessionInfoLabel">细分</span>
+                            <span class="calendarSessionInfoValue">${formatDivision(session.division)}</span>
+                          </div>
+                          ${session.cellModes && session.cellModes.some((m, i) => m !== session.cellModes[0]) ? `
+                          <div class="calendarSessionInfoItem">
+                            <span class="calendarSessionInfoLabel">模式</span>
+                            <span class="calendarSessionInfoValue">${session.cellModes.map(m => CELL_MODES[m]?.label || m).join(', ')}</span>
+                          </div>
+                          ` : ''}
+                          ${session.swing > 0 ? `
+                          <div class="calendarSessionInfoItem">
+                            <span class="calendarSessionInfoLabel">Groove</span>
+                            <span class="calendarSessionInfoValue">${session.swing}%</span>
+                          </div>
+                          ` : ''}
+                        </div>
+                        ${tags.length > 0 ? `<div class="calendarSessionTags">${tags.join('')}</div>` : ''}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          });
+          
+          calendarDayDetail.innerHTML = html;
+        }
+        
+        // 日历事件处理
+        if (calendarBtn) {
+          calendarBtn.addEventListener('click', () => {
+            calendarModal.classList.add('show');
+            currentCalendarDate = new Date();
+            renderCalendarStats();
+            renderCalendar();
+          }, { passive: true });
+        }
+        
+        if (calendarCloseBtn) {
+          calendarCloseBtn.addEventListener('click', () => {
+            calendarModal.classList.remove('show');
+          }, { passive: true });
+          
+          // 点击背景关闭
+          calendarModal.addEventListener('click', (e) => {
+            if (e.target === calendarModal) {
+              calendarModal.classList.remove('show');
+            }
+          }, { passive: true });
+        }
+        
+        if (calendarPrevMonth) {
+          calendarPrevMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() - 1);
+            renderCalendar();
+          }, { passive: true });
+        }
+        
+        if (calendarNextMonth) {
+          calendarNextMonth.addEventListener('click', () => {
+            currentCalendarDate.setMonth(currentCalendarDate.getMonth() + 1);
+            renderCalendar();
+          }, { passive: true });
+        }
+        
+        const calendarTodayBtn = document.getElementById("calendarTodayBtn");
+        if (calendarTodayBtn) {
+          calendarTodayBtn.addEventListener('click', () => {
+            currentCalendarDate = new Date();
+            renderCalendar();
+            updateDailyGoalProgress();
+          }, { passive: true });
+        }
+        
+        // 监听训练数据更新
+        window.addEventListener('trainingCalendarUpdated', () => {
+          updateDailyGoalProgress();
+          if (calendarModal.classList.contains('show')) {
+            renderCalendarStats();
+            renderCalendar();
+          }
+        });
+        
+        // 初始化每日目标进度
+        updateDailyGoalProgress();
+        
+        // 日历打开时更新进度
+        if (calendarBtn) {
+          calendarBtn.addEventListener('click', () => {
+            updateDailyGoalProgress();
+          }, { passive: true });
+        }
+      })();
+    </script>
+  </body>
+</html>
+
