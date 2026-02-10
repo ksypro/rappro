@@ -2710,6 +2710,7 @@
         const engine = new MetronomeEngine();
         const state = {
           wasPlayingBeforeHide: false,
+          backgroundKeepAliveInterval: null,
           ui: {
             hiTickIndex: -1,
             lastScheduledTick: null,
@@ -3104,6 +3105,11 @@
 
           if (engine.isPlaying) {
             engine.stop();
+            // 清理背景保持機制
+            if (state.backgroundKeepAliveInterval) {
+              clearInterval(state.backgroundKeepAliveInterval);
+              state.backgroundKeepAliveInterval = null;
+            }
             refreshPlayUI();
             return;
           }
@@ -3369,32 +3375,56 @@
           }, { passive: true });
         }
 
-        // Background/foreground handling: iOS may throttle timers in background.
+        // Background/foreground handling: Keep playing in background on iOS.
+        // Note: iOS may throttle timers, but we try to keep AudioContext running.
         document.addEventListener("visibilitychange", () => {
           if (document.hidden) {
-            state.wasPlayingBeforeHide = engine.isPlaying;
-            if (engine.isPlaying) {
-              engine.stop();
-              setStatePill("paused", "背景中已暫停");
-              showToast("切到背景：已暫停以避免節拍飄移");
-              refreshPlayUI();
+            // 背景時：確保 AudioContext 保持運行狀態
+            if (engine.isPlaying && engine.audio) {
+              // 先清理可能存在的舊 interval
+              if (state.backgroundKeepAliveInterval) {
+                clearInterval(state.backgroundKeepAliveInterval);
+              }
+              
+              // 定期檢查並恢復 AudioContext（如果被 iOS 暫停）
+              const keepAliveInterval = setInterval(() => {
+                // 如果已經停止播放或回到前台，清除 interval
+                if (!engine.isPlaying || !document.hidden) {
+                  clearInterval(keepAliveInterval);
+                  if (state.backgroundKeepAliveInterval === keepAliveInterval) {
+                    state.backgroundKeepAliveInterval = null;
+                  }
+                  return;
+                }
+                
+                // 檢查並恢復 AudioContext
+                if (engine.audio && engine.audio.state !== "running") {
+                  engine.audio.resume().catch(() => {
+                    // 如果恢復失敗，可能需要用戶手動操作
+                  });
+                }
+              }, 1000); // 每秒檢查一次
+              
+              // 存儲 interval ID 以便清理
+              state.backgroundKeepAliveInterval = keepAliveInterval;
+              
+              setStatePill("playing", "背景播放中");
+              showToast("切到背景：節拍將繼續播放");
             }
           } else {
-            if (state.wasPlayingBeforeHide) {
-              // If audio is already unlocked earlier, we can resume without extra gesture in most cases.
-              // Still, resume might fail if iOS suspended audio; we'll try.
-              engine.ensureAudioUnlocked()
-                .then(() => {
-                  engine.start(onScheduledTick);
-                  refreshPlayUI();
-                  showToast("回到前台：已重新同步");
-                })
-                .catch(() => {
-                  showToast("回到前台：請按 PLAY 重新開始");
-                })
-                .finally(() => {
-                  state.wasPlayingBeforeHide = false;
-                });
+            // 回到前台：清理背景保持機制
+            if (state.backgroundKeepAliveInterval) {
+              clearInterval(state.backgroundKeepAliveInterval);
+              state.backgroundKeepAliveInterval = null;
+            }
+            
+            // 確保 AudioContext 運行
+            if (engine.isPlaying && engine.audio) {
+              engine.ensureAudioUnlocked().catch(() => {
+                // 如果恢復失敗，提示用戶
+                showToast("回到前台：如無聲音請重新按 PLAY");
+              });
+              setStatePill("playing", "播放中");
             }
           }
         });
