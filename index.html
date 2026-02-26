@@ -1401,8 +1401,15 @@
             this.lastTickTime = 0;
 
             this.microDiv = 48; // 最小細分單位（1/48）
-            this.scheduleAheadTime = 0.16;
-            this.schedulerIntervalMs = 25;
+            // iOS 背景會節流/凍結 timer，若 scheduleAheadTime 太短會直接斷音
+            this._defaultScheduleAheadTime = 0.16;
+            this._defaultSchedulerIntervalMs = 25;
+            this._backgroundScheduleAheadTime = 3.0;
+            this._backgroundSchedulerIntervalMs = 400;
+            this._isBackgroundMode = false;
+
+            this.scheduleAheadTime = this._defaultScheduleAheadTime;
+            this.schedulerIntervalMs = this._defaultSchedulerIntervalMs;
             this._timer = null;
 
             this.gainDown = 0.85;
@@ -1458,6 +1465,23 @@
             }
             if (this.audio.state !== "running") {
               await this.audio.resume();
+            }
+          }
+
+          setBackgroundMode(enabled) {
+            this._isBackgroundMode = !!enabled;
+            if (this._isBackgroundMode) {
+              this.scheduleAheadTime = this._backgroundScheduleAheadTime;
+              this.schedulerIntervalMs = this._backgroundSchedulerIntervalMs;
+              // 立刻多排一段，減少背景 timer 變慢造成的「空窗」
+              try {
+                this._schedulerStep(() => {});
+              } catch (e) {
+                // ignore
+              }
+            } else {
+              this.scheduleAheadTime = this._defaultScheduleAheadTime;
+              this.schedulerIntervalMs = this._defaultSchedulerIntervalMs;
             }
           }
 
@@ -2711,11 +2735,40 @@
         const state = {
           wasPlayingBeforeHide: false,
           backgroundKeepAliveInterval: null,
+          backgroundTimerArmed: false,
           ui: {
             hiTickIndex: -1,
             lastScheduledTick: null,
           },
         };
+
+        // iOS 背景最佳努力：靠更長的排程前瞻 + 嘗試喚醒 AudioContext
+        function armBackgroundKeepAlive() {
+          if (state.backgroundTimerArmed) return;
+          state.backgroundTimerArmed = true;
+
+          // 先清理舊的 interval（如果有）
+          if (state.backgroundKeepAliveInterval) {
+            clearInterval(state.backgroundKeepAliveInterval);
+            state.backgroundKeepAliveInterval = null;
+          }
+
+          state.backgroundKeepAliveInterval = setInterval(() => {
+            // 背景 timer 可能被嚴重節流；這裡只是「有機會」跑到時做恢復
+            if (!engine.isPlaying || !document.hidden) return;
+            if (engine.audio && engine.audio.state !== "running") {
+              engine.audio.resume().catch(() => {});
+            }
+          }, 1000);
+        }
+
+        function disarmBackgroundKeepAlive() {
+          state.backgroundTimerArmed = false;
+          if (state.backgroundKeepAliveInterval) {
+            clearInterval(state.backgroundKeepAliveInterval);
+            state.backgroundKeepAliveInterval = null;
+          }
+        }
 
         // ===== DOM =====
         const bpmValue = document.getElementById("bpmValue");
@@ -3106,10 +3159,7 @@
           if (engine.isPlaying) {
             engine.stop();
             // 清理背景保持機制
-            if (state.backgroundKeepAliveInterval) {
-              clearInterval(state.backgroundKeepAliveInterval);
-              state.backgroundKeepAliveInterval = null;
-            }
+            disarmBackgroundKeepAlive();
             refreshPlayUI();
             return;
           }
@@ -3375,57 +3425,41 @@
           }, { passive: true });
         }
 
-        // Background/foreground handling: Keep playing in background on iOS.
-        // Note: iOS may throttle timers, but we try to keep AudioContext running.
+        // Background/foreground handling (best effort on iOS).
+        // Reality check: iOS 可能直接暫停/靜音 WebAudio，因此無法「保證」背景一定有聲音；
+        // 這裡的策略是：背景時加長排程前瞻 + 有機會就 resume AudioContext。
         document.addEventListener("visibilitychange", () => {
           if (document.hidden) {
-            // 背景時：確保 AudioContext 保持運行狀態
-            if (engine.isPlaying && engine.audio) {
-              // 先清理可能存在的舊 interval
-              if (state.backgroundKeepAliveInterval) {
-                clearInterval(state.backgroundKeepAliveInterval);
-              }
-              
-              // 定期檢查並恢復 AudioContext（如果被 iOS 暫停）
-              const keepAliveInterval = setInterval(() => {
-                // 如果已經停止播放或回到前台，清除 interval
-                if (!engine.isPlaying || !document.hidden) {
-                  clearInterval(keepAliveInterval);
-                  if (state.backgroundKeepAliveInterval === keepAliveInterval) {
-                    state.backgroundKeepAliveInterval = null;
-                  }
-                  return;
-                }
-                
-                // 檢查並恢復 AudioContext
-                if (engine.audio && engine.audio.state !== "running") {
-                  engine.audio.resume().catch(() => {
-                    // 如果恢復失敗，可能需要用戶手動操作
-                  });
-                }
-              }, 1000); // 每秒檢查一次
-              
-              // 存儲 interval ID 以便清理
-              state.backgroundKeepAliveInterval = keepAliveInterval;
-              
+            if (engine.isPlaying) {
+              engine.setBackgroundMode(true);
+              armBackgroundKeepAlive();
               setStatePill("playing", "背景播放中");
-              showToast("切到背景：節拍將繼續播放");
+              showToast("切到背景：將嘗試持續播放（iOS 可能限制背景音訊）");
             }
           } else {
-            // 回到前台：清理背景保持機制
-            if (state.backgroundKeepAliveInterval) {
-              clearInterval(state.backgroundKeepAliveInterval);
-              state.backgroundKeepAliveInterval = null;
-            }
-            
-            // 確保 AudioContext 運行
-            if (engine.isPlaying && engine.audio) {
+            disarmBackgroundKeepAlive();
+            engine.setBackgroundMode(false);
+            if (engine.isPlaying) {
               engine.ensureAudioUnlocked().catch(() => {
-                // 如果恢復失敗，提示用戶
                 showToast("回到前台：如無聲音請重新按 PLAY");
               });
               setStatePill("playing", "播放中");
             }
+          }
+        });
+
+        // iOS 有時不會可靠觸發 visibilitychange；補上 pagehide/pageshow。
+        window.addEventListener("pagehide", () => {
+          if (engine.isPlaying) {
+            engine.setBackgroundMode(true);
+            armBackgroundKeepAlive();
+          }
+        });
+        window.addEventListener("pageshow", () => {
+          disarmBackgroundKeepAlive();
+          engine.setBackgroundMode(false);
+          if (engine.isPlaying) {
+            engine.ensureAudioUnlocked().catch(() => {});
           }
         });
 
