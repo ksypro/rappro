@@ -1,7 +1,7 @@
 {
-  "name": "Rap Metronome",
-  "short_name": "Metronome",
-  "start_url": "./index.html",
+  "name": "RAP FLOW COACH · Flow Gym",
+  "short_name": "Flow Gym",
+  "start_url": "./gym.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#0B0F17",

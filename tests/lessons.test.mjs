@@ -1,0 +1,7 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {LESSONS,buildTimeline,pattern,clampBpm} from '../lessons.js';
+for(const bpm of [40,80,240])for(const lesson of LESSONS)test(`${lesson.id} at ${bpm} BPM: 16 bars and exact boundaries`,()=>{const t=buildTimeline(lesson.id,bpm);const practice=t.events.filter(e=>e.phase==='practice');assert.equal(practice.length,64);assert.equal(practice[0].time,t.practiceStart);assert.equal(practice.at(-1).time+60/bpm,t.duration);assert.equal(t.segments.length,4);assert.equal(t.segments.at(-1).end,t.duration);for(let i=1;i<t.events.length;i++)assert.ok(t.events[i].time>=t.events[i-1].time);assert.ok(!practice.some(e=>e.kind==='sub'));});
+test('switch changes only at four-bar boundaries',()=>{assert.deepEqual(Array.from({length:16},(_,i)=>pattern('switch',i).division),[2,2,2,2,3,3,3,3,2,2,2,2,3,3,3,3]);});
+test('ghost silences every fourth bar including demonstration',()=>{const t=buildTimeline('ghost',80);const ghost=t.events.filter(e=>e.phase==='practice'&&e.silent);assert.equal(ghost.length,16);assert.ok(ghost.every(e=>[3,7,11,15].includes(e.bar)));assert.ok(!t.events.some(e=>e.phase==='demo'&&e.bar===3&&e.kind==='sub'));});
+test('tempo boundaries and unknown courses',()=>{assert.equal(clampBpm(500),240);assert.equal(clampBpm(20),40);assert.equal(clampBpm('invalid'),80);assert.throws(()=>buildTimeline('unknown',80));});

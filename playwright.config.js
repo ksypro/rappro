@@ -1,0 +1,2 @@
+import {defineConfig} from '@playwright/test';
+export default defineConfig({testDir:'./tests/browser',timeout:60000,workers:1,use:{baseURL:'http://localhost:4189',viewport:{width:390,height:844},isMobile:true,hasTouch:true,permissions:['microphone'],launchOptions:{channel:'chrome',args:['--use-fake-device-for-media-stream','--use-fake-ui-for-media-stream']},screenshot:'only-on-failure'},webServer:{command:'npm start',url:'http://localhost:4189/gym.html',reuseExistingServer:true}});
