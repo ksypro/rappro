@@ -2,6 +2,8 @@
 
 ## Flow Gym v0.9.0
 
+目前修正版 **v0.9.1**：改善錄音中斷、回放載入與即時重練；驗證範圍及 iPhone 待驗步驟見 [SAFARI-QA.md](SAFARI-QA.md)。
+
 新增三個 16 Bars 課程、錄音回顧、四 Bars 自評、原速／減速重練及離線保存。執行 `npm start` 後開啟 http://localhost:4189/gym.html 。完整操作、資料限制及驗收說明見 [FLOW-GYM.md](FLOW-GYM.md)。原有自由節拍器入口為 `index.html`。
 
 專業節拍器應用程式，專為說唱練習設計。
